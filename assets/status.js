@@ -13,19 +13,36 @@
   'use strict';
 
   /**
-   * Tujuh status kanal, docs/04 Bagian 2.
+   * Tujuh status kanal, docs/04 Bagian 2, tersebar pada DUA SUMBU yang tidak
+   * boleh dicampur:
    *
-   * urutan  — makin besar makin genting; dipakai untuk mengurutkan agregasi.
-   *           insufficient_data dan stale BUKAN varian normal, jadi tidak
-   *           diletakkan di bawah normal. Keduanya pernyataan "sistem tidak tahu".
-   * pola    — nama kelas di style.css; null bila polos.
+   *   peringkat — tingkat peringatan: normal → waspada → siaga → awas.
+   *               Bernilai null untuk status yang bukan tingkat peringatan.
+   *               Hanya sumbu ini yang boleh dibandingkan sebagai "lebih genting".
+   *
+   *   kebasian  — kepatuhan operasional: 0 tidak basi, 1 basi, 2 basi kritis.
+   *               Ini soal bacaan yang tidak masuk sesuai jadwal, BUKAN soal
+   *               bendungan yang lebih berbahaya. Karena itu `stale_kritis`
+   *               tidak pernah mengalahkan `awas` — keduanya menjawab
+   *               pertanyaan yang berbeda dan ditampilkan berdampingan
+   *               (docs/04 Bagian 5.2).
+   *
+   * `insufficient_data` tidak berada di sumbu mana pun: peringkat null karena
+   * tidak dapat dinilai, kebasian 0 karena bacaannya tetap datang tepat waktu.
+   *
+   * urutanTampil — urutan baris pada kartu ringkasan aset, mengikuti contoh
+   *                docs/04 Bagian 5.2: peringatan tertinggi dulu, lalu normal,
+   *                lalu status "sistem tidak tahu".
+   * pola         — nama kelas di style.css; null bila polos.
    */
   var STATUS = {
     normal: {
       kode: 'normal',
       label: 'Normal',
       ikon: '●',
-      urutan: 1,
+      peringkat: 0,
+      kebasian: 0,
+      urutanTampil: 4,
       teks: '#166534',
       latar: '#dcfce7',
       garis: '#86efac',
@@ -35,7 +52,9 @@
       kode: 'waspada',
       label: 'Waspada',
       ikon: '▲',
-      urutan: 4,
+      peringkat: 1,
+      kebasian: 0,
+      urutanTampil: 3,
       teks: '#854d0e',
       latar: '#fef9c3',
       garis: '#fde047',
@@ -45,7 +64,9 @@
       kode: 'siaga',
       label: 'Siaga',
       ikon: '▲▲',
-      urutan: 5,
+      peringkat: 2,
+      kebasian: 0,
+      urutanTampil: 2,
       teks: '#9a3412',
       latar: '#ffedd5',
       garis: '#fdba74',
@@ -55,7 +76,9 @@
       kode: 'awas',
       label: 'Awas',
       ikon: '■',
-      urutan: 6,
+      peringkat: 3,
+      kebasian: 0,
+      urutanTampil: 1,
       teks: '#991b1b',
       latar: '#fee2e2',
       garis: '#fca5a5',
@@ -65,7 +88,9 @@
       kode: 'insufficient_data',
       label: 'Data tidak cukup',
       ikon: '?',
-      urutan: 2,
+      peringkat: null,
+      kebasian: 0,
+      urutanTampil: 5,
       teks: '#44403c',
       latar: '#f5f5f4',
       garis: '#a8a29e',
@@ -75,7 +100,9 @@
       kode: 'stale',
       label: 'Basi',
       ikon: '◷',
-      urutan: 3,
+      peringkat: null,
+      kebasian: 1,
+      urutanTampil: 6,
       teks: '#44403c',
       latar: '#f5f5f4',
       garis: '#a8a29e',
@@ -85,7 +112,9 @@
       kode: 'stale_kritis',
       label: 'Basi kritis',
       ikon: '◷◷',
-      urutan: 7,
+      peringkat: null,
+      kebasian: 2,
+      urutanTampil: 7,
       teks: '#292524',
       latar: '#e7e5e4',
       garis: '#78716c',
@@ -136,7 +165,9 @@
     kode: 'tidak_dikenal',
     label: 'Status tidak dikenal',
     ikon: '!',
-    urutan: 0,
+    peringkat: null,
+    kebasian: 0,
+    urutanTampil: 8,
     teks: '#44403c',
     latar: '#f5f5f4',
     garis: '#a8a29e',
@@ -191,6 +222,56 @@
     if (!q || !q.label) return '';
     var gaya = 'color:' + q.teks + ';background-color:' + q.latar + ';border-color:' + q.garis + ';';
     return '<span class="ews-lencana" style="' + gaya + '">' + escapeHTML(q.label) + '</span>';
+  }
+
+  // --- Agregasi --------------------------------------------------------------
+
+  function peringkatStatus(kode) { return status(kode).peringkat; }
+  function kebasianStatus(kode) { return status(kode).kebasian; }
+
+  /** Hanya empat tingkat peringatan yang dapat dinilai dan dibandingkan. */
+  function dapatDinilai(kode) { return status(kode).peringkat !== null; }
+
+  /**
+   * Agregasi kanal → instrumen, docs/04 Bagian 5.1.
+   *
+   * Mengembalikan dua keluaran, bukan satu status tunggal, karena kedua sumbu
+   * menjawab pertanyaan yang berbeda:
+   *
+   *   peringatan      kode tingkat peringatan tertinggi di antara kanal yang
+   *                   dapat dinilai; null bila tidak satu pun dapat dinilai
+   *   kebasian        derajat kebasian tertinggi (0/1/2) di antara semua kanal
+   *   takDapatDinilai cacah kanal tanpa peringkat (basi atau data tidak cukup)
+   *
+   * Kebasian tidak pernah menaikkan `peringatan`. Instrumen yang seluruh
+   * kanalnya basi menghasilkan peringatan null dengan kebasian 2 — dan
+   * tampilan wajib menyatakan keduanya, bukan memilih salah satu. Menukar ini
+   * jadi satu angka akan membuat instrumen yang sekadar telat dibaca tampil
+   * lebih genting daripada instrumen berstatus awas.
+   */
+  function agregasiKanal(kodeKanal) {
+    var daftar = kodeKanal || [];
+    var hasil = { peringatan: null, kebasian: 0, takDapatDinilai: 0, jumlahKanal: daftar.length };
+
+    daftar.forEach(function (kode) {
+      var s = status(kode);
+      if (s.peringkat === null) {
+        hasil.takDapatDinilai += 1;
+      } else if (hasil.peringatan === null || s.peringkat > peringkatStatus(hasil.peringatan)) {
+        hasil.peringatan = s.kode;
+      }
+      if (s.kebasian > hasil.kebasian) hasil.kebasian = s.kebasian;
+    });
+
+    return hasil;
+  }
+
+  /**
+   * Pembanding untuk urutan baris kartu ringkasan aset, docs/04 Bagian 5.2:
+   * peringatan tertinggi dulu, lalu normal, lalu status "sistem tidak tahu".
+   */
+  function bandingkanTampil(kodeA, kodeB) {
+    return status(kodeA).urutanTampil - status(kodeB).urutanTampil;
   }
 
   // --- Waktu -----------------------------------------------------------------
@@ -274,6 +355,11 @@
     quality: quality,
     lencanaStatus: lencanaStatus,
     lencanaQuality: lencanaQuality,
+    peringkatStatus: peringkatStatus,
+    kebasianStatus: kebasianStatus,
+    dapatDinilai: dapatDinilai,
+    agregasiKanal: agregasiKanal,
+    bandingkanTampil: bandingkanTampil,
     formatWIB: formatWIB,
     formatWIBSingkat: formatWIBSingkat,
     formatTanggalWIB: formatTanggalWIB,
