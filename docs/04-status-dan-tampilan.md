@@ -5,7 +5,8 @@
 | **Versi dokumen** | 0.1 — Draf awal |
 | **Status** | Draf |
 
-> Turunan tampilan dari `../docs/04-threshold-logic.md`. Mockup **tidak menghitung**
+> Turunan tampilan dari dokumen `04-threshold-logic.md` (berada di repo terpisah
+> `ews-system`). Mockup **tidak menghitung**
 > status — status dibaca dari `kanal.json`. Yang diatur di sini adalah bagaimana status
 > itu ditampilkan.
 

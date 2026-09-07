@@ -3,9 +3,9 @@
 Mockup web semi-interaktif sebagai materi presentasi ke calon klien / pemilik
 infrastruktur. **Bukan aplikasi Django, bukan produk, bukan tempat data asli.**
 
-Folder ini dirancang berdiri sendiri. Bila dibuka sebagai root, `docs/` di dalamnya
-adalah acuan yang berlaku. Bila dibuka sebagai bagian dari repo `EWS System`,
-`CLAUDE.md` root dan `../docs/` lebih tinggi — bila ada pertentangan, laporkan, jangan
+Folder ini berdiri sendiri sebagai repo tersendiri, dan `docs/` di dalamnya adalah acuan
+yang berlaku. Dokumen induk berada di repo terpisah **`ews-system`** dan tidak dapat
+dijangkau dari sini — bila ada pertentangan, dokumen induk yang benar; laporkan, jangan
 diam-diam pilih salah satu.
 
 ---

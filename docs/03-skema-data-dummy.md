@@ -6,8 +6,9 @@
 | **Status** | Draf |
 
 > Skema ini adalah **penyederhanaan tampilan** dari model data induk
-> (`../docs/03-model-data.md`). Struktur entitas dipertahankan agar markup mockup dapat
-> dipindah ke proyek utama; kolom yang tidak berdampak pada tampilan dibuang.
+> (dokumen `03-model-data.md`, berada di repo terpisah `ews-system`). Struktur entitas
+> dipertahankan agar markup mockup dapat dipindah ke proyek utama; kolom yang tidak
+> berdampak pada tampilan dibuang.
 
 ---
 

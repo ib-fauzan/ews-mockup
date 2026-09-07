@@ -5,7 +5,8 @@
 | **Versi dokumen** | 0.1 — Draf awal |
 | **Status** | Draf |
 
-> Stack sengaja disamakan dengan `../docs/05-tech-stack.md` supaya markup mockup dapat
+> Stack sengaja disamakan dengan dokumen `05-tech-stack.md` (berada di repo terpisah
+> `ews-system`) supaya markup mockup dapat
 > dipindah menjadi `frontend/templates/` di proyek utama. **Mockup ini bukan barang
 > buangan.** Karena itu jangan memilih pustaka lain yang "lebih gampang untuk mockup".
 

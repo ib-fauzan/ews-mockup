@@ -6,8 +6,8 @@
 | **Penyusun** | Iqbal Fauzan Herlambang |
 | **Status** | Draf |
 
-> Dokumen ini adalah turunan dari dokumen proyek induk di `../docs/`. Bila `mockup/`
-> dibuka sebagai folder root tersendiri, dokumen ini beserta 02–05 adalah acuan yang
+> Dokumen ini adalah turunan dari dokumen proyek induk, yang berada di repo terpisah
+> **`ews-system`**. Di repo mockup ini, dokumen ini beserta 02–05 adalah acuan yang
 > berlaku. **Sumber kebenaran tetap dokumen induk.** Bila ada pertentangan, dokumen
 > induk yang benar — laporkan, jangan diam-diam pilih salah satu.
 
