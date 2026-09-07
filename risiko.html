@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analisis Risiko — Mockup EWS</title>
+
+  <!-- docs/05 Bagian 4: versi dikunci, jangan @latest. -->
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="assets/style.css">
+  <!-- ECharts dan MapLibre belum dimuat: kerangka. -->
+</head>
+
+<body data-halaman="risiko" data-catatan-ds class="bg-white text-zinc-900">
+
+  <div id="ews-pita"></div>
+  <div id="ews-header"></div>
+
+  <div class="flex min-h-[calc(100vh-5.75rem)] items-stretch">
+    <div id="ews-sidebar" class="shrink-0"></div>
+
+    <main class="min-w-0 flex-1 px-6 py-5">
+      <header class="mb-4">
+        <h1 class="text-xl font-semibold">Analisis Risiko</h1>
+        <p class="text-sm text-zinc-500">Risk Analysis</p>
+      </header>
+
+      <!-- Catatan decision support, docs/01 Bagian 5. Disuntik oleh nav.js. -->
+      <div id="ews-catatan-ds"></div>
+
+      <div class="space-y-4">
+
+        <section class="ews-blok-kosong p-4">
+          <h2 class="text-sm font-semibold">Register PFM</h2>
+          <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+            Tabel statis: kode PFM, deskripsi mekanisme, lokasi, instrumen indikator, dan
+            tingkat kepercayaan. Kolom instrumen indikator tertaut ke halaman
+            <a href="instrumentasi.html" class="underline hover:text-zinc-700">Pemantauan Instrumentasi</a>.
+          </p>
+          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
+        </section>
+
+        <div class="grid grid-cols-2 gap-4">
+
+          <section class="ews-blok-kosong p-4">
+            <h2 class="text-sm font-semibold">Peta genangan</h2>
+            <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              Overlay hasil pemodelan dambreak sebagai image layer.
+            </p>
+            <p class="mt-2 border-l-2 border-zinc-300 pl-2 text-xs leading-relaxed text-zinc-600">
+              Pemodelan dambreak dikerjakan di luar sistem. Yang ditampilkan di sini adalah
+              hasil pra-hitung yang dimuat sebagai gambar; sistem tidak melakukan
+              perhitungan genangan.
+            </p>
+            <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu berkas &middot; MapLibre</p>
+          </section>
+
+          <section class="ews-blok-kosong p-4">
+            <h2 class="text-sm font-semibold">Ringkasan RTD</h2>
+            <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              Tampilan ringkas tingkat kesiapsiagaan sebagaimana tercantum pada dokumen
+              Rencana Tindak Darurat. Statis, tanpa logika.
+            </p>
+            <p class="mt-2 border-l-2 border-zinc-300 pl-2 text-xs leading-relaxed text-zinc-600">
+              Dokumen RTD resmi yang berlaku adalah acuan tunggal. Tampilan ini hanya
+              ringkasan untuk keperluan orientasi dan tidak menggantikan dokumen tersebut.
+            </p>
+            <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Tanpa defer, dan sebelum Alpine berjalan: nav.js menyuntik markup ber-x-data. -->
+  <script src="assets/status.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

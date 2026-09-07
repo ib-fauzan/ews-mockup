@@ -1,0 +1,101 @@
+/**
+ * style.css — hanya yang tidak bisa dicapai Tailwind (docs/05, struktur folder).
+ *
+ * Tata letak, jarak, dan warna netral ditangani utilitas Tailwind di nav.js dan
+ * di berkas HTML. Yang tersisa di sini: pola garis untuk status basi, gaya
+ * placeholder, dan beberapa penyesuaian tingkat dokumen.
+ *
+ * Tidak ada warna status di berkas ini. Nilai warna status hanya di status.js
+ * (docs/04 Bagian 7); yang diatur di sini adalah POLA-nya, yang memang tidak
+ * punya padanan utilitas Tailwind.
+ */
+
+/* Alpine: sembunyikan elemen ber-x-show sampai Alpine sempat menginisialisasi.
+   Tanpa ini, dropdown bendungan berkedip terbuka saat halaman dimuat. */
+[x-cloak] {
+  display: none !important;
+}
+
+/* Sasaran 1366×768 tanpa scroll horizontal (docs/05 Bagian 3.8).
+   Sidebar 224px + konten minimum masih muat; batas ini mencegah kolom konten
+   meremas diri sampai tak terbaca pada layar yang lebih sempit. */
+body {
+  min-width: 1100px;
+}
+
+/* --- Lencana status dan quality flag ---------------------------------------
+   Bentuk dasarnya di sini; warnanya disuntik inline oleh status.js. */
+.ews-lencana {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  white-space: nowrap;
+}
+
+.ews-lencana-ikon {
+  font-size: 0.7em;
+  letter-spacing: -0.05em;
+}
+
+/* --- Pola status basi -------------------------------------------------------
+   docs/04 Bagian 2: abu-abu harus jelas berbeda dari hijau, dibedakan juga oleh
+   pola — bukan semata warna. Ini yang membuat `stale` tetap terbaca sebagai
+   "sistem tidak tahu" pada proyektor dengan reproduksi warna buruk, dan bagi
+   pengguna dengan gangguan pembedaan warna.
+
+   background-color tetap datang dari gaya inline status.js; di sini hanya
+   background-image, jadi keduanya tidak bertabrakan. */
+.pola-basi {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.11) 0,
+    rgba(0, 0, 0, 0.11) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+}
+
+.pola-basi-kritis {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.22) 0,
+    rgba(0, 0, 0, 0.22) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* --- Placeholder ------------------------------------------------------------
+   Nama produk, nama bendungan, dan identitas pengguna belum ditetapkan
+   (docs/01 Bagian 7). Digayakan agar tidak pernah tertukar dengan teks
+   sungguhan saat tangkapan layar demo beredar. */
+.ews-placeholder {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  padding: 0 0.25rem;
+  border-bottom: 1px dashed #a1a1aa;
+  color: #52525b;
+  background-color: #fafafa;
+}
+
+/* --- Blok placeholder komponen ---------------------------------------------
+   Wadah kosong bertanda untuk komponen yang belum diisi. Sengaja tidak berisi
+   angka contoh: docs/03 Bagian 1.1 mewajibkan seluruh angka datang dari
+   data/*.json, dan angka contoh di markup adalah utang yang mahal dibersihkan. */
+.ews-blok-kosong {
+  border: 1px dashed #d4d4d8;
+  border-radius: 0.375rem;
+  background-color: #fafafa;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.02) 0,
+    rgba(0, 0, 0, 0.02) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}

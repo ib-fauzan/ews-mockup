@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pemantauan Instrumentasi — Mockup EWS</title>
+
+  <!-- docs/05 Bagian 4: versi dikunci, jangan @latest. -->
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="assets/style.css">
+  <!-- ECharts dan MapLibre belum dimuat: kerangka. -->
+</head>
+
+<body data-halaman="instrumentasi" data-catatan-ds class="bg-white text-zinc-900">
+
+  <div id="ews-pita"></div>
+  <div id="ews-header"></div>
+
+  <div class="flex min-h-[calc(100vh-5.75rem)] items-stretch">
+    <div id="ews-sidebar" class="shrink-0"></div>
+
+    <main class="min-w-0 flex-1 px-6 py-5">
+      <header class="mb-4">
+        <h1 class="text-xl font-semibold">Pemantauan Instrumentasi</h1>
+        <p class="text-sm text-zinc-500">Instrumentation Monitoring</p>
+      </header>
+
+      <!-- Catatan decision support, docs/01 Bagian 5. Disuntik oleh nav.js. -->
+      <div id="ews-catatan-ds"></div>
+
+      <div class="flex gap-4">
+
+        <!-- Panel kiri: daftar instrumen -->
+        <section class="ews-blok-kosong w-72 shrink-0 p-4">
+          <h2 class="text-sm font-semibold">Daftar instrumen</h2>
+          <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+            Dapat difilter menurut jenis, status, dan zona bendungan. Tiap baris memuat
+            kode instrumen, jenis, status, dan waktu bacaan terakhir berlabel WIB.
+          </p>
+          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
+        </section>
+
+        <!-- Panel kanan: detail instrumen terpilih -->
+        <div class="min-w-0 flex-1 space-y-4">
+
+          <section class="ews-blok-kosong p-4">
+            <h2 class="text-sm font-semibold">Panel detail instrumen</h2>
+            <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              Isi panel bergantung pada tipe kanal, dan tiga tipe wajib tampil berbeda.
+              Ini konsekuensi langsung dari entitas kanal pada model data — bukan pilihan
+              tata letak.
+            </p>
+            <ul class="mt-3 space-y-1 text-xs text-zinc-500">
+              <li><span class="font-semibold text-zinc-700">scalar</span> &mdash; piezometer VW, V-notch, TMA, ARR: satu grafik deret waktu.</li>
+              <li><span class="font-semibold text-zinc-700">vector3</span> &mdash; patok geser: tiga kanal dX, dY, dZ.</li>
+              <li><span class="font-semibold text-zinc-700">profile</span> &mdash; inklinometer: nilai terhadap kedalaman, dengan pemilih tanggal.</li>
+            </ul>
+            <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
+          </section>
+
+          <section class="ews-blok-kosong p-4">
+            <h2 class="text-sm font-semibold">Grafik utama</h2>
+            <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              Deret nilai terkonversi, overlay TMA pada sumbu-y kedua, pita envelope sebagai
+              area berbayang, penanda titik di atas normal. Bacaan meragukan dan tidak valid
+              ditampilkan dengan penanda berbeda, tidak disembunyikan.
+            </p>
+            <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data &middot; ECharts</p>
+          </section>
+
+          <div class="grid grid-cols-2 gap-4">
+            <section class="ews-blok-kosong p-4">
+              <h2 class="text-sm font-semibold">Panel penjelasan</h2>
+              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+                Untuk instrumen di atas normal: nilai teramati, nilai yang diharapkan, besar
+                simpangan, aturan mana yang terpicu, dan dasar penetapan ambangnya.
+              </p>
+              <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
+            </section>
+
+            <section class="ews-blok-kosong p-4">
+              <h2 class="text-sm font-semibold">Sebaran nilai terhadap TMA</h2>
+              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+                Sebaran historis instrumen terhadap TMA, dengan garis median, pita envelope,
+                dan titik bacaan terakhir disorot.
+              </p>
+              <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data &middot; ECharts</p>
+            </section>
+          </div>
+
+          <section class="ews-blok-kosong p-4">
+            <h2 class="text-sm font-semibold">Tabel bacaan</h2>
+            <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              Kolom: waktu (WIB), nilai mentah, nilai terkonversi, quality flag, petugas.
+              Nilai mentah dan terkonversi keduanya ditampilkan — nilai mentah adalah sumber
+              kebenaran.
+            </p>
+            <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Tanpa defer, dan sebelum Alpine berjalan: nav.js menyuntik markup ber-x-data. -->
+  <script src="assets/status.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>
