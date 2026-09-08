@@ -55,9 +55,31 @@
     { kode: 'C', nama: '[BENDUNGAN C]', aktif: false },
   ];
 
+  // Klien karangan. Namanya sengaja dibuat sama dengan `pengelola` di
+  // data/bendungan.json supaya header dan data tidak bercerita berbeda.
+  // "Wilayah Tengah" bukan nama balai yang benar-benar ada.
+  var KLIEN = {
+    nama: 'BBWS Wilayah Tengah',
+    peran: 'Pengelola bendungan',
+  };
+
+  // Lambang klien sengaja abstrak: tiga guratan air pada ubin membulat.
+  // BUKAN bentuk perisai, segel, atau lambang negara — mockup ini tidak boleh
+  // terlihat memakai emblem instansi pemerintah yang sungguhan.
+  var LAMBANG_KLIEN =
+    '<svg viewBox="0 0 32 32" class="h-9 w-9 shrink-0" aria-hidden="true">' +
+      '<rect x="1.5" y="1.5" width="29" height="29" rx="7" fill="#0f766e"/>' +
+      '<path d="M7 12.6c2 0 2-1.9 4-1.9s2 1.9 4 1.9 2-1.9 4-1.9 2 1.9 4 1.9" ' +
+        'fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" opacity="0.95"/>' +
+      '<path d="M7 17.4c2 0 2-1.9 4-1.9s2 1.9 4 1.9 2-1.9 4-1.9 2 1.9 4 1.9" ' +
+        'fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" opacity="0.75"/>' +
+      '<path d="M7 22.2c2 0 2-1.9 4-1.9s2 1.9 4 1.9 2-1.9 4-1.9 2 1.9 4 1.9" ' +
+        'fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" opacity="0.5"/>' +
+    '</svg>';
+
   var PENGGUNA = {
-    nama: '[NAMA PENGGUNA]',
-    peran: '[PERAN]',
+    nama: 'Rahmat Wijaya',
+    peran: 'Engineer keamanan bendungan',
   };
 
   // --- Navigasi --------------------------------------------------------------
@@ -169,10 +191,6 @@
 
   /** Header, docs/02 Bagian 1.1. */
   function renderHeader() {
-    var slotLogo =
-      'flex items-center justify-center rounded border border-dashed border-zinc-400 ' +
-      'bg-zinc-100 text-[10px] font-semibold uppercase tracking-wide text-zinc-500';
-
     return (
       '<header class="flex items-center justify-between gap-4 border-b border-zinc-200 ' +
       'bg-white px-4 py-2">' +
@@ -192,10 +210,16 @@
 
         // Kanan: slot logo klien, lalu pengguna demo dan perannya
         '<div class="flex min-w-0 items-center gap-3">' +
-          '<div title="Slot logo klien" class="' + slotLogo + ' h-10 w-20 shrink-0">LOGO KLIEN</div>' +
+          LAMBANG_KLIEN +
+          '<div class="min-w-0">' +
+            '<div class="truncate text-sm font-medium text-zinc-900">' +
+              esc(KLIEN.nama) + '</div>' +
+            '<div class="truncate text-xs text-zinc-500">' + esc(KLIEN.peran) + '</div>' +
+          '</div>' +
+          '<div class="h-8 w-px shrink-0 bg-zinc-200"></div>' +
           '<div class="min-w-0 text-right">' +
-            '<div class="truncate text-sm text-zinc-900">' + ph(PENGGUNA.nama) + '</div>' +
-            '<div class="truncate text-xs text-zinc-500">' + ph(PENGGUNA.peran) + '</div>' +
+            '<div class="truncate text-sm text-zinc-900">' + esc(PENGGUNA.nama) + '</div>' +
+            '<div class="truncate text-xs text-zinc-500">' + esc(PENGGUNA.peran) + '</div>' +
           '</div>' +
         '</div>' +
       '</header>'
