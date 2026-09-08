@@ -4,3 +4,5 @@ Thumbs.db
 *.log
 data-asli/
 *.xlsx
+__pycache__/
+*.pyc
