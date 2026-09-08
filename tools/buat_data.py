@@ -362,7 +362,11 @@ def bangun_skalar(par, rng, tanggal, tma, el_puncak):
         })
 
         # --- pembacaan yang diekspor ----------------------------------------
-        jendela = HARI_PEMBACAAN_NARASI if kode == "P-03" else HARI_PEMBACAAN
+        # TMA ikut jendela terpanjang meski bukan pembawa narasi: ia variabel
+        # bebas untuk setiap overlay, dan dengan 30 hari overlay pada grafik
+        # P-03 yang 90 hari hanya menutupi sepertiga akhir.
+        panjang = kode == "P-03" or jenis == "tma"
+        jendela = HARI_PEMBACAAN_NARASI if panjang else HARI_PEMBACAAN
         for i in range(n - jendela, n):
             pembacaan.append({
                 "id_kanal": id_kanal,
@@ -430,27 +434,43 @@ def bangun_patok(rng, tanggal, el_puncak):
         sumbu_bergerak = "dz" if i == 1 else None
         for sumbu in ("dx", "dy", "dz"):
             idk = f"{kode}-{sumbu}"
-            laju = 0.22 if sumbu == sumbu_bergerak else float(rng.uniform(0.02, 0.07))
+            # Laju sumbu yang bergerak dipilih agar perpindahan kumulatif 90
+            # hari benar-benar melewati ambang waspada. Nilai lama 0,22 mm per
+            # 30 hari hanya menghasilkan 0,66 mm terhadap ambang 8 mm, padahal
+            # statusnya ditetapkan waspada — panel penjelasan lalu menyebut
+            # "nilai teramati 0,43 mm" berdampingan dengan "ambang waspada
+            # 8 mm", dan grafiknya tidak memuat garis ambang sama sekali.
+            laju = 3.2 if sumbu == sumbu_bergerak else float(rng.uniform(0.02, 0.07))
             sigma = 1.1
+            geser_total = laju * (HARI_PEMBACAAN_NARASI / 30.0)
+
             if target in ("stale", "stale_kritis"):
                 status = target
-                alasan = (f"Terakhir dibaca {umur} hari lalu. Jadwal tiap 7 hari.")
-                z = None
+                alasan = f"Terakhir dibaca {umur} hari lalu. Jadwal tiap 7 hari."
             else:
-                geser_total = laju * (HARI_PEMBACAAN_NARASI / 30.0)
-                z = round(geser_total / sigma, 2)
-                status = "waspada" if sumbu == sumbu_bergerak else "normal"
-                alasan = ("Laju perpindahan 90 hari melampaui ambang (R-3)."
-                          if status == "waspada" else "")
+                # Status R-3 dibaca dari perbandingan perpindahan kumulatif
+                # terhadap ambang absolut, bukan ditetapkan di muka.
+                if geser_total >= AMBANG_PATOK["siaga"]:
+                    status = "siaga"
+                elif geser_total >= AMBANG_PATOK["waspada"]:
+                    status = "waspada"
+                else:
+                    status = "normal"
+                alasan = "" if status == "normal" else (
+                    f"Perpindahan kumulatif {geser_total:.1f} mm dalam "
+                    f"{HARI_PEMBACAAN_NARASI} hari melampaui ambang {status} "
+                    f"{AMBANG_PATOK[status]:.0f} mm (R-3).")
 
             kanal.append({
                 "id": idk, "id_instrumen": kode, "nama": nama[sumbu],
                 "tipe": "vector3", "satuan": "mm", "aturan_utama": "R-3",
                 "ambang": dict(AMBANG_PATOK),
-                "envelope": {"tersedia": status not in ("stale", "stale_kritis"),
-                             "median_pada_tma_sekarang": 0.0,
-                             "sigma": sigma if status not in ("stale", "stale_kritis") else None,
-                             "z_sekarang": z},
+                # R-3 dinilai terhadap ambang absolut, bukan terhadap envelope
+                # korelasi TMA. Mengisi median 0 dan sigma seolah ada envelope
+                # membuat panel penjelasan menampilkan simpangan sigma yang
+                # tidak punya arti untuk aturan ini.
+                "envelope": {"tersedia": False, "median_pada_tma_sekarang": None,
+                             "sigma": None, "z_sekarang": None},
                 "status": status, "alasan_status": alasan,
             })
 

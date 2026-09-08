@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pemantauan Instrumentasi — Mockup EWS</title>
 
-  <!-- docs/05 Bagian 4: versi dikunci, jangan @latest. -->
+  <!-- docs/05 Bagian 4: versi dikunci, jangan @latest.
+       MapLibre tidak dimuat — halaman ini tidak berpeta. -->
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="assets/style.css">
-  <!-- ECharts dan MapLibre belum dimuat: kerangka. -->
 </head>
 
 <body data-halaman="instrumentasi" data-catatan-ds class="flex min-h-screen flex-col bg-white text-zinc-900">
@@ -20,7 +21,8 @@
   <div class="flex min-h-0 flex-1 items-stretch">
     <div id="ews-sidebar" class="shrink-0"></div>
 
-    <main class="min-w-0 flex-1 px-6 py-5">
+    <!-- x-data wajib: Alpine v3 hanya memproses pohon yang berakar padanya. -->
+    <main x-data class="min-w-0 flex-1 px-6 py-5">
       <header class="mb-4">
         <h1 class="text-xl font-semibold">Pemantauan Instrumentasi</h1>
         <p class="text-sm text-zinc-500">Instrumentation Monitoring</p>
@@ -29,83 +31,282 @@
       <!-- Catatan decision support, docs/01 Bagian 5. Disuntik oleh nav.js. -->
       <div id="ews-catatan-ds"></div>
 
+      <template x-if="!$store.ews.siap && !$store.ews.galat">
+        <p class="text-sm text-zinc-500">Memuat data&hellip;</p>
+      </template>
+      <template x-if="$store.ews.galat">
+        <p class="border-l-4 border-zinc-500 bg-zinc-100 px-4 py-3 text-sm">
+          Gagal memuat data: <span x-text="$store.ews.galat"></span>.
+          Halaman ini perlu dibuka lewat server statis, bukan berkas lokal.
+        </p>
+      </template>
+
+      <template x-if="$store.ews.siap">
       <div class="flex gap-4">
 
-        <!-- Panel kiri: daftar instrumen -->
-        <section class="ews-blok-kosong w-72 shrink-0 p-4">
-          <h2 class="text-sm font-semibold">Daftar instrumen</h2>
-          <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-            Dapat difilter menurut jenis, status, dan zona bendungan. Tiap baris memuat
-            kode instrumen, jenis, status, dan waktu bacaan terakhir berlabel WIB.
-          </p>
-          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
-        </section>
-
-        <!-- Panel kanan: detail instrumen terpilih -->
-        <div class="min-w-0 flex-1 space-y-4">
-
-          <section class="ews-blok-kosong p-4">
-            <h2 class="text-sm font-semibold">Panel detail instrumen</h2>
-            <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-              Isi panel bergantung pada tipe kanal, dan tiga tipe wajib tampil berbeda.
-              Ini konsekuensi langsung dari entitas kanal pada model data — bukan pilihan
-              tata letak.
+        <!-- ============ 3.1 Daftar instrumen ============ -->
+        <section class="w-72 shrink-0 rounded border border-zinc-200">
+          <div class="border-b border-zinc-200 p-3">
+            <h2 class="mb-2 text-sm font-semibold">Daftar instrumen</h2>
+            <div class="space-y-1.5">
+              <select x-model="$store.ews.filter.jenis"
+                      class="w-full rounded border border-zinc-300 px-2 py-1 text-xs">
+                <option value="">Semua jenis</option>
+                <template x-for="j in $store.ews.daftarJenis" :key="j">
+                  <option :value="j" x-text="j.replace(/_/g, ' ')"></option>
+                </template>
+              </select>
+              <select x-model="$store.ews.filter.status"
+                      class="w-full rounded border border-zinc-300 px-2 py-1 text-xs">
+                <option value="">Semua status</option>
+                <template x-for="s in $store.ews.daftarStatus" :key="s">
+                  <option :value="s" x-text="EWSStatus.labelStatus(s)"></option>
+                </template>
+              </select>
+              <select x-model="$store.ews.filter.zona"
+                      class="w-full rounded border border-zinc-300 px-2 py-1 text-xs">
+                <option value="">Semua zona</option>
+                <template x-for="z in $store.ews.daftarZona" :key="z">
+                  <option :value="z" x-text="z"></option>
+                </template>
+              </select>
+            </div>
+            <p class="mt-2 text-xs text-zinc-500">
+              <span x-text="$store.ews.daftarTersaring.length"></span>
+              dari <span x-text="$store.ews.instrumen.length"></span> instrumen
             </p>
-            <ul class="mt-3 space-y-1 text-xs text-zinc-500">
-              <li><span class="font-semibold text-zinc-700">scalar</span> &mdash; piezometer VW, V-notch, TMA, ARR: satu grafik deret waktu.</li>
-              <li><span class="font-semibold text-zinc-700">vector3</span> &mdash; patok geser: tiga kanal dX, dY, dZ.</li>
-              <li><span class="font-semibold text-zinc-700">profile</span> &mdash; inklinometer: nilai terhadap kedalaman, dengan pemilih tanggal.</li>
-            </ul>
-            <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
-          </section>
-
-          <section class="ews-blok-kosong p-4">
-            <h2 class="text-sm font-semibold">Grafik utama</h2>
-            <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-              Deret nilai terkonversi, overlay TMA pada sumbu-y kedua, pita envelope sebagai
-              area berbayang, penanda titik di atas normal. Bacaan meragukan dan tidak valid
-              ditampilkan dengan penanda berbeda, tidak disembunyikan.
-            </p>
-            <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data &middot; ECharts</p>
-          </section>
-
-          <div class="grid grid-cols-2 gap-4">
-            <section class="ews-blok-kosong p-4">
-              <h2 class="text-sm font-semibold">Panel penjelasan</h2>
-              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-                Untuk instrumen di atas normal: nilai teramati, nilai yang diharapkan, besar
-                simpangan, aturan mana yang terpicu, dan dasar penetapan ambangnya.
-              </p>
-              <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
-            </section>
-
-            <section class="ews-blok-kosong p-4">
-              <h2 class="text-sm font-semibold">Sebaran nilai terhadap TMA</h2>
-              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-                Sebaran historis instrumen terhadap TMA, dengan garis median, pita envelope,
-                dan titik bacaan terakhir disorot.
-              </p>
-              <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data &middot; ECharts</p>
-            </section>
           </div>
 
-          <section class="ews-blok-kosong p-4">
-            <h2 class="text-sm font-semibold">Tabel bacaan</h2>
-            <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-              Kolom: waktu (WIB), nilai mentah, nilai terkonversi, quality flag, petugas.
-              Nilai mentah dan terkonversi keduanya ditampilkan — nilai mentah adalah sumber
-              kebenaran.
-            </p>
-            <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
-          </section>
+          <ul class="max-h-[calc(100vh-19rem)] overflow-y-auto">
+            <template x-for="b in $store.ews.daftarTersaring" :key="b.instrumen.id">
+              <li>
+                <button type="button" @click="$store.ews.terpilih = b.instrumen.id"
+                        class="block w-full border-b border-zinc-100 px-3 py-2 text-left hover:bg-zinc-50"
+                        :class="$store.ews.instrumenTerpilih &&
+                                $store.ews.instrumenTerpilih.id === b.instrumen.id
+                                ? 'bg-zinc-100 font-semibold' : ''">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm" x-text="b.instrumen.id"></span>
+                    <span x-html="EWSStatus.lencanaStatus(b.ember)"></span>
+                  </div>
+                  <div class="mt-0.5 text-xs font-normal text-zinc-500">
+                    <span x-text="b.instrumen.jenis.replace(/_/g, ' ')"></span>
+                    &middot; <span x-text="b.instrumen.zona"></span>
+                  </div>
+                  <div class="text-[11px] font-normal text-zinc-400"
+                       x-text="EWSStatus.formatWIB(b.instrumen.dibaca_terakhir)"></div>
+                </button>
+              </li>
+            </template>
+          </ul>
+        </section>
 
+        <!-- ============ Panel detail ============ -->
+        <div class="min-w-0 flex-1 space-y-4" x-data
+             x-effect="$store.ews.instrumenTerpilih">
+
+          <template x-if="$store.ews.instrumenTerpilih">
+          <div class="space-y-4">
+
+            <!-- Kepala detail -->
+            <section class="rounded border border-zinc-200 p-4">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h2 class="text-lg font-semibold" x-text="$store.ews.instrumenTerpilih.id"></h2>
+                  <p class="text-sm text-zinc-500">
+                    <span x-text="$store.ews.instrumenTerpilih.jenis.replace(/_/g, ' ')"></span>
+                    &middot; <span x-text="$store.ews.instrumenTerpilih.lokasi"></span>
+                  </p>
+                </div>
+                <div class="text-right">
+                  <span x-html="EWSStatus.lencanaStatus($store.ews.ember($store.ews.instrumenTerpilih.id))"></span>
+                  <p class="mt-1 text-xs text-zinc-500">
+                    Dibaca <span x-text="EWSStatus.formatWIB($store.ews.instrumenTerpilih.dibaca_terakhir)"></span>
+                  </p>
+                </div>
+              </div>
+              <dl class="mt-3 grid grid-cols-4 gap-3 border-t border-zinc-200 pt-3 text-xs">
+                <div>
+                  <dt class="text-zinc-500">Zona</dt>
+                  <dd x-text="$store.ews.instrumenTerpilih.zona"></dd>
+                </div>
+                <div>
+                  <dt class="text-zinc-500">Jadwal</dt>
+                  <dd>tiap <span x-text="$store.ews.instrumenTerpilih.interval_jadwal_hari"></span> hari</dd>
+                </div>
+                <div>
+                  <dt class="text-zinc-500">Status alat</dt>
+                  <dd x-text="$store.ews.instrumenTerpilih.status_alat"></dd>
+                </div>
+                <div>
+                  <dt class="text-zinc-500">Indikator PFM</dt>
+                  <dd>
+                    <template x-if="$store.ews.instrumenTerpilih.indikator_pfm.length">
+                      <span>
+                        <span x-text="$store.ews.instrumenTerpilih.indikator_pfm.join(', ')"></span>
+                        <span class="text-zinc-500"
+                              x-text="'(' + $store.ews.instrumenTerpilih.relevansi_pfm + ')'"></span>
+                      </span>
+                    </template>
+                    <template x-if="!$store.ews.instrumenTerpilih.indikator_pfm.length">
+                      <span class="text-zinc-400">&mdash;</span>
+                    </template>
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <!-- ============ 3.2 / 3.3 Panel per kanal ============ -->
+            <template x-for="blok in $store.ews.blokKanal" :key="blok.kunci">
+              <section class="rounded border border-zinc-200 p-4">
+
+                <div class="mb-2 flex items-baseline justify-between gap-3">
+                  <div>
+                    <h3 class="text-sm font-semibold" x-text="blok.judul"></h3>
+                    <p class="text-xs text-zinc-500">
+                      Tipe kanal <span class="font-mono" x-text="blok.tipe"></span>
+                      &middot; aturan <span x-text="blok.kanal[0].aturan_utama"></span>
+                      &middot; satuan <span x-text="blok.kanal[0].satuan"></span>
+                    </p>
+                  </div>
+                  <div class="flex shrink-0 gap-1">
+                    <template x-for="k in blok.kanal" :key="k.id">
+                      <span x-html="EWSStatus.lencanaStatus(k.status)"></span>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Grafik: bentuknya ditentukan tipe kanal -->
+                <div x-data="{ g: null }"
+                     x-init="$nextTick(() => {
+                       g = blok.tipe === 'profile'
+                         ? EWSCharts.profilKedalaman($refs.gr, blok.kanal[0], blok.bacaan[0])
+                         : EWSCharts.deretUtama($refs.gr, blok.deret, $store.ews.deretTMAOverlay,
+                                                blok.envelope, $store.ews.kSigmaNormal);
+                       EWSCharts.ikutiUkuran([g], $refs.gr);
+                     })">
+                  <div x-ref="gr" class="h-72 w-full"></div>
+                </div>
+
+                <p class="text-[11px] leading-relaxed text-zinc-400" x-text="blok.catatanGrafik"></p>
+
+                <!-- 3.4 Panel penjelasan -->
+                <template x-for="k in blok.kanal.filter(k => k.status !== 'normal')" :key="'jl-' + k.id">
+                  <div class="mt-3 border-l-4 border-zinc-400 bg-zinc-50 px-3 py-2">
+                    <div class="mb-1 flex items-center gap-2">
+                      <span x-html="EWSStatus.lencanaStatus(k.status)"></span>
+                      <span class="text-xs font-semibold" x-text="k.nama"></span>
+                    </div>
+                    <p class="text-xs leading-relaxed text-zinc-700" x-text="k.alasan_status"></p>
+
+                    <dl class="mt-2 grid grid-cols-4 gap-2 text-xs">
+                      <template x-if="$store.ews.nilaiTerakhir(k.id) !== null">
+                        <div>
+                          <dt class="text-zinc-500">Nilai teramati</dt>
+                          <dd class="tabular-nums">
+                            <span x-text="$store.ews.nilaiTerakhir(k.id)"></span>
+                            <span x-text="k.satuan"></span>
+                          </dd>
+                        </div>
+                      </template>
+                      <template x-if="k.envelope && k.envelope.median_pada_tma_sekarang !== null">
+                        <div>
+                          <dt class="text-zinc-500">Nilai diharapkan</dt>
+                          <dd class="tabular-nums">
+                            <span x-text="k.envelope.median_pada_tma_sekarang"></span>
+                            <span x-text="k.satuan"></span>
+                          </dd>
+                        </div>
+                      </template>
+                      <template x-if="k.envelope && k.envelope.z_sekarang !== null">
+                        <div>
+                          <dt class="text-zinc-500">Simpangan</dt>
+                          <dd class="tabular-nums"><span x-text="k.envelope.z_sekarang"></span>&sigma;</dd>
+                        </div>
+                      </template>
+                      <div>
+                        <dt class="text-zinc-500">Aturan terpicu</dt>
+                        <dd x-text="k.aturan_utama"></dd>
+                      </div>
+                    </dl>
+
+                    <p class="mt-2 text-[11px] leading-relaxed text-zinc-500"
+                       x-text="$store.ews.dasarAmbang(k)"></p>
+                  </div>
+                </template>
+
+                <!-- 3.5 Sebaran nilai vs TMA: hanya kanal yang dinilai terhadap TMA -->
+                <template x-if="blok.sebaran">
+                  <div class="mt-4 border-t border-zinc-200 pt-3">
+                    <h4 class="text-xs font-semibold">Sebaran nilai terhadap TMA</h4>
+                    <p class="mb-1 text-[11px] leading-relaxed text-zinc-500">
+                      Seluruh riwayat instrumen terhadap TMA, dengan median, rentang normal,
+                      dan bacaan terakhir disorot.
+                    </p>
+                    <div x-data="{ g: null }"
+                         x-init="$nextTick(() => {
+                           g = EWSCharts.sebaranTMA($refs.sc, blok.kanal[0], blok.sebaran.titik,
+                                                    blok.envelope, blok.sebaran.terakhir,
+                                                    $store.ews.kSigmaNormal);
+                           EWSCharts.ikutiUkuran([g], $refs.sc);
+                         })">
+                      <div x-ref="sc" class="h-64 w-full"></div>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- 3.6 Tabel bacaan -->
+                <div class="mt-4 border-t border-zinc-200 pt-3">
+                  <h4 class="mb-1 text-xs font-semibold">Bacaan terakhir</h4>
+                  <p class="mb-2 text-[11px] text-zinc-500">
+                    Nilai mentah dan terkonversi keduanya ditampilkan &mdash; nilai mentah
+                    adalah sumber kebenaran.
+                  </p>
+                  <div class="max-h-72 overflow-y-auto">
+                    <table class="w-full text-xs">
+                      <thead class="sticky top-0 bg-white">
+                        <tr class="border-b border-zinc-200 text-left uppercase tracking-wide text-zinc-500">
+                          <th class="py-1 pr-3 font-medium">Kanal</th>
+                          <th class="py-1 pr-3 font-medium">Waktu</th>
+                          <th class="py-1 pr-3 font-medium">Nilai mentah</th>
+                          <th class="py-1 pr-3 font-medium">Terkonversi</th>
+                          <th class="py-1 pr-3 font-medium">Quality</th>
+                          <th class="py-1 font-medium">Petugas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-for="r in blok.tabel" :key="r.kunci">
+                          <tr class="border-b border-zinc-100">
+                            <td class="whitespace-nowrap py-1 pr-3 text-zinc-500" x-text="r.kanal"></td>
+                            <td class="whitespace-nowrap py-1 pr-3" x-text="r.waktu"></td>
+                            <td class="whitespace-nowrap py-1 pr-3 tabular-nums" x-text="r.mentah"></td>
+                            <td class="whitespace-nowrap py-1 pr-3 tabular-nums" x-text="r.terkonversi"></td>
+                            <td class="py-1 pr-3" x-html="r.lencana"></td>
+                            <td class="whitespace-nowrap py-1 text-zinc-500" x-text="r.petugas"></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </section>
+            </template>
+
+          </div>
+          </template>
         </div>
+
       </div>
+      </template>
     </main>
   </div>
 
-  <!-- Tanpa defer, dan sebelum Alpine berjalan: nav.js menyuntik markup ber-x-data. -->
+  <!-- Tanpa defer, dan sebelum Alpine berjalan: nav.js menyuntik markup ber-x-data,
+       data.js mendaftarkan store pada alpine:init. -->
   <script src="assets/status.js"></script>
+  <script src="assets/data.js"></script>
+  <script src="assets/charts.js"></script>
   <script src="assets/nav.js"></script>
 </body>
 </html>
