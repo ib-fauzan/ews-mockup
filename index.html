@@ -10,6 +10,8 @@
        tersedia saat store selesai memuat data. -->
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -129,7 +131,7 @@
         </section>
 
         <!-- 2.5 Instrumen perlu perhatian -->
-        <section class="col-span-2 rounded border border-zinc-200 p-4">
+        <section class="col-span-3 rounded border border-zinc-200 p-4">
           <h2 class="mb-1 text-sm font-semibold">Instrumen perlu perhatian</h2>
           <p class="mb-3 text-xs text-zinc-500">
             Di atas normal, tidak dapat dinilai, atau basi. Indikator utama PFM diurutkan lebih atas.
@@ -169,13 +171,40 @@
         </section>
 
         <!-- 2.3 Peta instrumen -->
-        <section class="ews-blok-kosong p-4">
-          <h2 class="text-sm font-semibold">Peta instrumen</h2>
+        <section class="col-span-3 rounded border border-zinc-200 p-4">
+          <h2 class="text-sm font-semibold">Denah instrumen</h2>
           <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-            Penanda berwarna sesuai status kanal tertinggi tiap instrumen, dengan popup
-            ringkas yang tertaut ke halaman instrumentasi.
+            Warna penanda mengikuti status instrumen. Klik penanda untuk ringkasan
+            dan tautan ke halaman instrumentasi.
           </p>
-          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Belum dipasang &middot; MapLibre</p>
+          <div x-data="{ p: null }"
+               x-init="$nextTick(() => p = EWSMap.denahInstrumen($refs.peta, $store.ews.bendungan, $store.ews.instrumenBerstatus))">
+            <div x-ref="peta" class="mt-3 h-[440px] w-full rounded border border-zinc-200"></div>
+          </div>
+          <p class="mt-2 text-[10px] leading-relaxed text-zinc-400">
+            Denah skematik bendungan karangan. Bukan peta lokasi sebenarnya dan tidak
+            memakai peta dasar.
+          </p>
+        </section>
+
+        <!-- Penampang melintang: instrumen pada elevasinya -->
+        <section class="col-span-3 rounded border border-zinc-200 p-4">
+          <div class="mb-1 flex items-baseline justify-between">
+            <h2 class="text-sm font-semibold">Penampang melintang</h2>
+            <span class="text-xs text-zinc-500">
+              Puncak El. <span x-text="$store.ews.bendungan.geometri.el_puncak_mdpl.toFixed(2)"></span> mdpl
+              &middot; panjang <span x-text="$store.ews.bendungan.geometri.panjang_puncak_m"></span> m
+            </span>
+          </div>
+          <p class="mb-2 text-xs leading-relaxed text-zinc-500">
+            Penampang tipikal &mdash; seluruh instrumen sepanjang puncak diproyeksikan ke
+            satu potongan, bukan potongan pada satu STA tertentu. Warna penanda mengikuti
+            status instrumen.
+          </p>
+          <div x-data="{ g: null }"
+               x-init="$nextTick(() => { g = EWSCharts.penampang($refs.pot, $store.ews.bendungan.geometri, $store.ews.instrumenBerstatus); EWSCharts.ikutiUkuran([g], $refs.pot); })">
+            <div x-ref="pot" class="h-80 w-full"></div>
+          </div>
         </section>
 
         <!-- 2.4 Daftar kejadian terakhir -->
@@ -233,6 +262,7 @@
   <script src="assets/status.js"></script>
   <script src="assets/data.js"></script>
   <script src="assets/charts.js"></script>
+  <script src="assets/map.js"></script>
   <script src="assets/nav.js"></script>
 </body>
 </html>

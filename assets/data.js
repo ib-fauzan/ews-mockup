@@ -159,6 +159,23 @@ document.addEventListener('alpine:init', function () {
         .map(function (p) { return [p.waktu, p.nilai_terkonversi]; });
     },
 
+    /**
+     * Instrumen beserta status agregatnya, untuk peta denah dan penampang.
+     * Status memakai ember yang sama dengan kartu ringkasan supaya peta dan
+     * kartu tidak pernah bercerita berbeda tentang instrumen yang sama.
+     */
+    get instrumenBerstatus() {
+      var self = this;
+      return this.instrumen.map(function (i) {
+        var kanal = self.kanalPerInstrumen[i.id] || [];
+        var pemicu = kanal.filter(function (k) { return k.alasan_status; })[0];
+        return Object.assign({}, i, {
+          status: self.ember(i.id),
+          label: pemicu ? pemicu.alasan_status : (kanal[0] ? kanal[0].nama : ''),
+        });
+      });
+    },
+
     get tinggiJagaan() {
       if (!this.bendungan) return null;
       return this.bendungan.elevasi_puncak_mdpl - this.bendungan.tma_sekarang_mdpl;

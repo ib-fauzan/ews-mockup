@@ -99,3 +99,16 @@ body {
     transparent 12px
   );
 }
+
+/* --- Label instrumen di denah ----------------------------------------------
+   Dipakai Marker HTML pada map.js. Layer symbol MapLibre butuh sumber glyph,
+   yang tidak ada pada gaya peta tanpa peta dasar. */
+.ews-peta-label {
+  font: 600 11px ui-sans-serif, system-ui, sans-serif;
+  color: #3f3f46;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 0.2rem;
+  padding: 0 0.2rem;
+  pointer-events: none;
+  white-space: nowrap;
+}

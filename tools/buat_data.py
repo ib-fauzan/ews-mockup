@@ -67,8 +67,28 @@ AMBANG_INKLINO = {"waspada": 12.0, "siaga": 20.0, "awas": 32.0}    # mm
 NAMA_BENDUNGAN = "Bendungan Sedayu"
 SUNGAI = "Kali Sedayu"
 PENGELOLA = "BBWS Wilayah Tengah"
-LAT, LON = -7.0412, 111.3875
+# Jangkar koordinat bendungan karangan. Nilai lama berasal dari skrip yang
+# menuliskannya sebagai "digeser dari lokasi asli" — yaitu koordinat situs
+# sungguhan yang digeser sedikit, dan itu tetap menunjuk ke tempat yang sama
+# begitu peta dasar dipasang. Diganti angka bulat yang jelas mengada-ada.
+LAT, LON = -7.2500, 110.7500
 EL_HILIR = 68.5          # mdpl, muka air hilir; batas bawah tinggi tekan
+
+# --- Geometri bendungan ------------------------------------------------------
+# Bentuk umum urugan zonal: lebar puncak, kemiringan lereng, dan proporsi inti
+# adalah angka desain lazim, bukan salinan bendungan mana pun. Elevasi diturunkan
+# dari deret TMA sintetis di main(), tidak ditulis mati di sini.
+PANJANG_PUNCAK = 400.0   # m, STA 0+000 sampai 0+400
+LEBAR_PUNCAK = 10.0      # m
+LERENG_HULU = 2.75       # 1 : n
+LERENG_HILIR = 2.25
+M_PER_DERAJAT_LAT = 110574.0
+M_PER_DERAJAT_LON = 110430.0   # pada lintang sekitar -7
+
+def ke_lonlat(sta_m, offset_m):
+    """Denah bendungan -> lon/lat. Hilir diambil ke arah selatan."""
+    return (round(LON + (sta_m - PANJANG_PUNCAK / 2) / M_PER_DERAJAT_LON, 6),
+            round(LAT - offset_m / M_PER_DERAJAT_LAT, 6))
 
 # --- Inventaris (docs/03 Bagian 5) ------------------------------------------
 N_PIEZO, N_PATOK, N_INKLINO, N_VNOTCH = 24, 16, 3, 4
@@ -88,6 +108,20 @@ TARGET = {
 }
 Z_TARGET = {"waspada": 2.9, "siaga": 3.8}
 ZONA_PIEZO = ["inti", "fondasi", "tumpuan", "filter"]
+
+# Jarak dari sumbu (m, positif = hilir) dan elevasi ujung piezometer per zona.
+# Elevasi ujung selalu di bawah tinggi tekan yang dibangkitkan, supaya tidak
+# ada piezometer yang "kering" — tinggi tekan di bawah ujungnya sendiri.
+# `dalam` = seberapa jauh ujung piezometer berada DI BAWAH tinggi tekan
+# terendah yang pernah dibangkitkan untuk instrumen itu. Diturunkan dari
+# datanya sendiri, bukan rentang tetap, supaya tidak pernah ada piezometer
+# "kering" — ujung di atas tinggi tekannya sendiri, yang mustahil.
+TATA_ZONA = {
+    "inti":    {"offset": 0.0,  "dalam": (2.0, 6.0)},
+    "filter":  {"offset": 14.0, "dalam": (2.0, 6.0)},
+    "fondasi": {"offset": 5.0,  "dalam": (8.0, 16.0)},   # menembus ke fondasi
+    "tumpuan": {"offset": 2.0,  "dalam": (2.0, 7.0)},
+}
 # Indikator PFM-02 (erosi buluh pada kontak fondasi) wajib duduk di zona
 # fondasi, dan indikator PFM-03 (rembesan lewat tubuh) di zona inti.
 ZONA_KHUSUS = {"P-03": "fondasi", "P-07": "fondasi", "P-11": "inti"}
@@ -154,7 +188,7 @@ def status_dari_z(z):
 # Instrumen skalar: piezometer, V-notch, TMA, ARR
 # ============================================================================
 
-def bangun_skalar(par, rng, tanggal, tma):
+def bangun_skalar(par, rng, tanggal, tma, el_puncak):
     """
     Membangkitkan seluruh instrumen berkanal `scalar` beserta deret riwayatnya.
     Mengembalikan (instrumen, kanal, pembacaan, sebaran).
@@ -273,12 +307,41 @@ def bangun_skalar(par, rng, tanggal, tma):
                       else f"Simpangan {abs(z):.1f} sigma dari envelope korelasi TMA (R-2).")
             z = round(z, 2)
 
+        # --- posisi denah dan elevasi -------------------------------------
+        # Instrumen ditata mengikuti susunan lazim urugan zonal: piezometer
+        # berkelompok di beberapa STA, tumpuan menempel di kedua pangkal,
+        # ambang ukur di kaki hilir. Sebaran acak akan tampak sebagai gumpalan
+        # titik di peta, bukan barisan sepanjang sumbu bendungan.
+        if jenis == "piezometer_vw":
+            nomor = int(kode.split("-")[1])
+            tz = TATA_ZONA[zona]
+            if zona == "tumpuan":
+                sta = 25.0 if nomor % 2 else PANJANG_PUNCAK - 25.0
+            else:
+                sta = 60.0 + ((nomor - 1) // 6) * 90.0
+            offset = tz["offset"] + float(rng.uniform(-3, 3))
+            elevasi = round(float(nilai.min()) - float(rng.uniform(*tz["dalam"])), 2)
+        elif jenis == "v_notch":
+            nomor = int(kode.split("-")[1])
+            sta = 100.0 + (nomor - 1) * 88.0
+            offset = 85.0
+            elevasi = round(EL_HILIR + 1.2, 2)
+        elif jenis == "tma":
+            sta, offset = PANJANG_PUNCAK / 2, -75.0        # di waduk, hulu
+            elevasi = el_puncak
+        else:                                              # arr
+            sta, offset = PANJANG_PUNCAK - 15.0, 95.0
+            elevasi = el_puncak
+
+        lon_i, lat_i = ke_lonlat(sta, offset)
         instrumen.append({
             "id": kode, "id_bendungan": "bdg-01", "jenis": jenis,
-            "lokasi": f"Zona {zona}, STA 0+{rng.integers(60, 460):03d}",
+            "lokasi": f"Zona {zona}, STA 0+{int(sta):03d}, El. {elevasi:.2f} mdpl",
             "zona": zona,
-            "lat": round(LAT + float(rng.uniform(-0.004, 0.004)), 6),
-            "lon": round(LON + float(rng.uniform(-0.004, 0.004)), 6),
+            "lat": lat_i, "lon": lon_i,
+            "sta_m": round(sta, 1),
+            "jarak_sumbu_m": round(offset, 1),
+            "elevasi_mdpl": elevasi,
             "interval_jadwal_hari": jadwal,
             "status_alat": "aktif",
             "dibaca_terakhir": utc(tanggal[-1]),
@@ -326,7 +389,7 @@ def bangun_skalar(par, rng, tanggal, tma):
 # Patok geser (vector3) dan inklinometer (profile)
 # ============================================================================
 
-def bangun_patok(rng, tanggal):
+def bangun_patok(rng, tanggal, el_puncak):
     """
     docs/03 Bagian 4.4 — deformasi kumulatif orde milimeter per bulan, dengan
     derau pengukuran yang relatif besar terhadap sinyalnya. Tiga kanal per
@@ -342,11 +405,20 @@ def bangun_patok(rng, tanggal):
         umur = {"stale": 23, "stale_kritis": 61}.get(target, 0)
         terakhir = tanggal[-1] - timedelta(days=umur)
 
+        # Dua baris patok: satu di puncak, satu di berm hilir — susunan yang
+        # dipakai untuk memisahkan gerakan puncak dari gerakan lereng.
+        baris = (i - 1) // 8
+        sta = 25.0 + ((i - 1) % 8) * 50.0
+        offset = 0.0 if baris == 0 else 22.0
+        elevasi = round(el_puncak - (0.0 if baris == 0 else 8.0), 2)
+        lon_i, lat_i = ke_lonlat(sta, offset)
         instrumen.append({
             "id": kode, "id_bendungan": "bdg-01", "jenis": "patok_geser",
-            "lokasi": f"Puncak bendungan, STA 0+{40 * i:03d}", "zona": "puncak",
-            "lat": round(LAT + float(rng.uniform(-0.003, 0.003)), 6),
-            "lon": round(LON + float(rng.uniform(-0.003, 0.003)), 6),
+            "lokasi": ("Puncak bendungan" if baris == 0 else "Berm hilir") +
+                      f", STA 0+{int(sta):03d}",
+            "zona": "puncak" if baris == 0 else "hilir",
+            "lat": lat_i, "lon": lon_i,
+            "sta_m": round(sta, 1), "jarak_sumbu_m": offset, "elevasi_mdpl": elevasi,
             "interval_jadwal_hari": 7,
             "status_alat": "aktif" if umur == 0 else "kalibrasi",
             "dibaca_terakhir": utc(terakhir, "03:00:00"),
@@ -397,7 +469,7 @@ def bangun_patok(rng, tanggal):
     return instrumen, kanal, pembacaan
 
 
-def bangun_inklino(rng, tanggal):
+def bangun_inklino(rng, tanggal, el_puncak):
     """
     Kanal `profile`: deviasi terhadap KEDALAMAN, bukan satu angka.
     docs/03 Bagian 3.3 dan 3.4.
@@ -408,11 +480,15 @@ def bangun_inklino(rng, tanggal):
     for i in range(1, N_INKLINO + 1):
         kode = f"IN-{i:02d}"
         target = TARGET.get(kode, "normal")
+        sta = 120.0 + (i - 1) * 110.0
+        offset = 32.0
+        elevasi = round(el_puncak - 12.0, 2)
+        lon_i, lat_i = ke_lonlat(sta, offset)
         instrumen.append({
             "id": kode, "id_bendungan": "bdg-01", "jenis": "inklinometer",
-            "lokasi": f"Lereng hilir, STA 0+{150 + 90 * i:03d}", "zona": "hilir",
-            "lat": round(LAT + float(rng.uniform(-0.003, 0.003)), 6),
-            "lon": round(LON + float(rng.uniform(-0.003, 0.003)), 6),
+            "lokasi": f"Lereng hilir, STA 0+{int(sta):03d}", "zona": "hilir",
+            "lat": lat_i, "lon": lon_i,
+            "sta_m": round(sta, 1), "jarak_sumbu_m": offset, "elevasi_mdpl": elevasi,
             "interval_jadwal_hari": 30, "status_alat": "aktif",
             "dibaca_terakhir": utc(tanggal[-1], "03:00:00"),
             "indikator_pfm": ["PFM-01"],
@@ -596,6 +672,98 @@ def tautkan_pfm(instrumen, pfm):
 # Penulisan dan swauji
 # ============================================================================
 
+def denah(rng, x_hulu, x_hilir):
+    """
+    Denah situs sebagai lon/lat siap pakai GeoJSON: garis puncak, tapak
+    bendungan, genangan waduk, pelimpah, dan sungai hilir.
+
+    Dihitung di sini, bukan di map.js, supaya koordinat tidak ditulis mati di
+    lapisan tampilan dan bentuk situs bisa disetel dari satu tempat.
+    Bentuknya karangan sepenuhnya.
+    """
+    L = PANJANG_PUNCAK
+
+    def garis(titik):
+        return [list(ke_lonlat(sta, off)) for sta, off in titik]
+
+    # Tepi waduk: lengkung tak beraturan di hulu, dijaga tetap mulus
+    # Lebih banyak titik dengan goyangan kecil: sembilan titik bergoyang 25 m
+    # menghasilkan segi banyak bersudut, bukan garis pantai.
+    tepi_waduk = [(0.0, x_hulu)]
+    for k in range(17):
+        sta = -60.0 + k * (L + 120.0) / 16.0
+        jauh = -70.0 - 95.0 * math.sin(math.pi * k / 16.0) + float(rng.uniform(-7, 7))
+        tepi_waduk.append((sta, jauh))
+    tepi_waduk.append((L, x_hulu))
+
+    # Sungai hilir: keluar dari kaki hilir lalu berbelok ke tenggara
+    sungai = [(L * 0.24, x_hilir + 6)]
+    for k in range(1, 6):
+        sungai.append((L * 0.24 + k * 40.0 + float(rng.uniform(-12, 12)),
+                       x_hilir + 16.0 + k * 17.0 + float(rng.uniform(-8, 8))))
+
+    return {
+        "puncak": garis([(0.0, 0.0), (L, 0.0)]),
+        "tapak": garis([(0.0, x_hulu), (L, x_hulu), (L, x_hilir), (0.0, x_hilir),
+                        (0.0, x_hulu)]),
+        "waduk": garis(tepi_waduk + [(0.0, x_hulu)]),
+        # Di luar tapak, menempel pangkal kiri — bukan menindih tubuh bendungan
+        "pelimpah": garis([(-58.0, x_hulu), (-16.0, x_hulu), (-8.0, x_hilir + 45.0),
+                           (-50.0, x_hilir + 45.0), (-58.0, x_hulu)]),
+        "sungai": garis(sungai),
+        "pusat": list(ke_lonlat(L / 2.0, 10.0)),
+    }
+
+
+def geometri_penampang(el_puncak, tma_maks, tma_kini, rng_denah):
+    """
+    Penampang melintang bendungan untuk panel di index.html.
+
+    Ditaruh di bendungan.json, bukan di berkas tampilan, supaya aturan
+    docs/03 Bagian 1.1 tetap berlaku: nol angka di lapisan tampilan. User bisa
+    menyetel bentuk bendungan tanpa menyentuh HTML atau JS.
+
+    Bentuknya karangan: lebar puncak, kemiringan, dan proporsi inti adalah
+    angka desain lazim untuk urugan zonal.
+    """
+    el_toe_hulu = round(EL_HILIR + 6.5, 2)
+    el_toe_hilir = round(EL_HILIR + 3.0, 2)
+    el_fondasi = round(EL_HILIR + 0.5, 2)
+    sh = LEBAR_PUNCAK / 2.0
+    x_hulu = -(sh + LERENG_HULU * (el_puncak - el_toe_hulu))
+    x_hilir = sh + LERENG_HILIR * (el_puncak - el_toe_hilir)
+    tepi = round(max(abs(x_hulu), x_hilir) + 25.0, 1)
+
+    return {
+        "satuan_jarak": "m",
+        "satuan_elevasi": "mdpl",
+        "batas_jarak": [-tepi, tepi],
+        # Garis luar tubuh bendungan, hulu (negatif) ke hilir (positif)
+        "tubuh": [
+            [-tepi, el_toe_hulu],
+            [round(x_hulu, 2), el_toe_hulu],
+            [-sh, el_puncak], [sh, el_puncak],
+            [round(x_hilir, 2), el_toe_hilir],
+            [tepi, el_toe_hilir],
+        ],
+        # Inti kedap: sempit di puncak, melebar ke fondasi
+        "inti": [
+            [-3.0, round(el_puncak - 2.0, 2)], [3.0, round(el_puncak - 2.0, 2)],
+            [11.0, el_fondasi], [-11.0, el_fondasi],
+        ],
+        "fondasi": [[-tepi, el_fondasi], [tepi, el_fondasi]],
+        "muka_air": {
+            "normal_mdpl": round(float(tma_maks), 2),
+            "banjir_mdpl": round(float(tma_maks) + 2.2, 2),
+            "sekarang_mdpl": round(float(tma_kini), 2),
+            "hilir_mdpl": EL_HILIR,
+        },
+        "el_puncak_mdpl": el_puncak,
+        "panjang_puncak_m": PANJANG_PUNCAK,
+        "denah": denah(rng_denah, round(x_hulu, 2), round(x_hilir, 2)),
+    }
+
+
 def tulis(berkas):
     os.makedirs(KELUAR, exist_ok=True)
     for nama, obj in berkas.items():
@@ -666,12 +834,14 @@ def main():
 
     tanggal = [SEKARANG - timedelta(days=d) for d in range(HARI_RIWAYAT - 1, -1, -1)]
     tma = deret_tma(par, rng, tanggal)
+    el_puncak = round(float(tma.max()) + 4.5, 2)
     print(f"\nderet TMA sintetis: {tma.min():.2f}-{tma.max():.2f} mdpl, "
           f"sekarang {tma[-1]:.2f} mdpl pada {tanggal[-1].date()}")
+    print(f"elevasi puncak {el_puncak:.2f} mdpl, panjang puncak {PANJANG_PUNCAK:.0f} m")
 
-    ins_s, kan_s, bac_s, sebaran = bangun_skalar(par, rng, tanggal, tma)
-    ins_p, kan_p, bac_p = bangun_patok(rng, tanggal)
-    ins_i, kan_i, bac_i = bangun_inklino(rng, tanggal)
+    ins_s, kan_s, bac_s, sebaran = bangun_skalar(par, rng, tanggal, tma, el_puncak)
+    ins_p, kan_p, bac_p = bangun_patok(rng, tanggal, el_puncak)
+    ins_i, kan_i, bac_i = bangun_inklino(rng, tanggal, el_puncak)
 
     instrumen = ins_s + ins_p + ins_i
     kanal = kan_s + kan_p + kan_i
@@ -688,12 +858,14 @@ def main():
          "pengelola": PENGELOLA, "tipe": "urugan_zonal",
          "lat": LAT, "lon": LON,
          "tinggi_m": 33.5,
-         "elevasi_puncak_mdpl": round(float(tma.max()) + 4.5, 2),
+         "elevasi_puncak_mdpl": el_puncak,
          "tma_sekarang_mdpl": round(float(tma[-1]), 2),
          "tma_diperbarui": utc(tanggal[-1]),
          "tma_historis_min": round(float(tma.min()), 2),
          "tma_historis_max": round(float(tma.max()), 2),
-         "aktif": True},
+         "aktif": True,
+         "geometri": geometri_penampang(el_puncak, tma.max(), tma[-1],
+                                       np.random.default_rng(BENIH + 1))},
         {"id": "bdg-02", "nama": "Bendungan Karangwuni", "aktif": False},
         {"id": "bdg-03", "nama": "Bendungan Tirtomulyo", "aktif": False},
     ]
