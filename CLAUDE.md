@@ -19,8 +19,10 @@ diam-diam pilih salah satu.
 | `docs/03-skema-data-dummy.md` | Struktur JSON dan aturan pembangkitan angka |
 | `docs/04-status-dan-tampilan.md` | Tujuh status, quality flag, aturan agregasi tampilan |
 | `docs/05-stack-frontend.md` | Stack, konvensi kode, jalur pemindahan ke proyek utama |
+| `STATUS.md` | **Baca lebih dulu.** Sudah sampai mana, keputusan yang sudah diambil user, utang yang belum lunas, dan jebakan yang sudah pernah memakan waktu |
 
-**Dokumen adalah sumber kebenaran, bukan kode.**
+**Dokumen adalah sumber kebenaran, bukan kode.** `STATUS.md` bukan spesifikasi —
+ia merekam keadaan; bila bertentangan dengan `docs/`, `docs/` yang benar.
 
 ---
 
@@ -40,6 +42,10 @@ diam-diam pilih salah satu.
 
 1. Semua angka dibaca dari `data/*.json` lewat `fetch()`. **Nol angka hardcode di HTML.**
 2. Seluruh isi `data/` adalah karangan. **Tidak ada data bendungan asli**, tanpa pengecualian.
+   Alurnya dua tahap: `tools/parameter.py` membaca `data-asli/*.xlsx` hanya untuk
+   menaksir belasan angka agregat, lalu `tools/buat_data.py` membangkitkan seluruh
+   deret baru dari angka itu. **Menyalin bacaan asli lalu menggesernya tidak
+   memenuhi syarat ini** — selisih dan korelasinya tetap milik bendungan aslinya.
 3. Timestamp UTC di JSON, konversi ke WIB hanya di lapisan tampilan. Setiap waktu yang
    tampil wajib berlabel zona waktu.
 4. Bacaan menyimpan **nilai mentah DAN nilai terkonversi**. Nilai mentah sumber kebenaran.
@@ -64,16 +70,33 @@ Pemetaan status → warna dan label **hanya ada di `assets/status.js`.**
 
 ## Urutan pengerjaan
 
-| Urutan | Pekerjaan | Kedalaman |
-|---|---|---|
-| 1 | Kerangka: `assets/*.js`, `style.css`, enam HTML bernavigasi, catatan decision support terpasang | — |
-| 2 | `data/*.json` lengkap sesuai `docs/03` | — |
-| 3 | `instrumentasi.html` | **Paling dalam** — inti MVP dan inti nilai jual |
-| 4 | `index.html` | Dalam — kesan pertama klien |
-| 5 | `risiko.html` | Sedang |
-| 6 | `konstruksi.html`, `op.html`, `laporan.html` | Dangkal — sudah dikunci sebagai mockup |
+| Urutan | Pekerjaan | Kedalaman | Keadaan |
+|---|---|---|---|
+| 1 | Kerangka: `assets/*.js`, `style.css`, enam HTML bernavigasi, catatan decision support terpasang | — | Selesai |
+| 2 | `data/*.json` lengkap sesuai `docs/03` | — | Selesai |
+| 3 | `instrumentasi.html` | **Paling dalam** — inti MVP dan inti nilai jual | Selesai |
+| 4 | `index.html` | Dalam — kesan pertama klien | Selesai |
+| 5 | `risiko.html` | Sedang | **Berikutnya** |
+| 6 | `konstruksi.html`, `op.html`, `laporan.html` | Dangkal — sudah dikunci sebagai mockup | Belum |
 
 Tiga halaman terakhir memang sengaja dangkal. Jangan diperdalam tanpa diminta.
+
+---
+
+## Menjalankan dan memeriksa
+
+```bash
+python tools/serve.py          # http://localhost:8080/index.html
+python tools/buat_data.py      # bangkitkan ulang data/*.json
+```
+
+Pakai `tools/serve.py`, bukan `python -m http.server` — yang bawaan tidak mengirim
+`Cache-Control`, jadi perubahan pada `assets/*.js` tidak terlihat sampai muat ulang paksa.
+
+**Buka halaman di peramban sebelum melapor selesai.** Empat bug pernah lolos dari
+pemeriksaan Node dan hanya terlihat di layar; yang terburuk membuat seluruh dasbor
+diam di "Memuat data" **tanpa satu pun galat konsol**. Rinciannya di `STATUS.md`
+Bagian 5.2.
 
 ---
 
@@ -142,17 +165,28 @@ menyiratkan klaim kemampuan sistem.
 
 ## Checklist sebelum ditunjukkan ke klien
 
-- [ ] Enam halaman saling terhubung, tidak ada tautan mati
-- [ ] Catatan decision support terbaca di index, instrumentasi, risiko
-- [ ] Pita label mockup tampil di semua halaman
-- [ ] `insufficient_data` dan `stale` terlihat nyata di dashboard
-- [ ] Ada minimal satu kanal `vector3` dan satu `profile` yang tampil benar
-- [ ] Semua angka dari `data/*.json`, nol angka hardcode
-- [ ] Grafik utama punya overlay TMA pada sumbu-y kedua
-- [ ] Panel scatter nilai vs TMA berfungsi
-- [ ] Panel penjelasan muncul untuk instrumen di atas normal
-- [ ] Ada satu instrumen pembawa narasi penyimpangan lambat (`docs/03` Bagian 4.6)
-- [ ] Semua waktu berlabel WIB
-- [ ] Nol kalimat berklaim life-safety
-- [ ] Slot logo klien ada di header
-- [ ] Dibuka di 1366×768 tanpa scroll horizontal
+Diperiksa 8 September 2026. Yang tercentang sudah diverifikasi terhadap kode dan
+data, bukan diasumsikan.
+
+- [x] Enam halaman saling terhubung, tidak ada tautan mati
+- [x] Catatan decision support terbaca di index, instrumentasi, risiko
+- [x] Pita label tampil di semua halaman
+- [x] `insufficient_data` dan `stale` terlihat nyata di dashboard
+- [x] Ada minimal satu kanal `vector3` dan satu `profile` yang tampil benar
+- [x] Semua angka dari `data/*.json`, nol angka hardcode
+- [x] Grafik utama punya overlay TMA pada sumbu-y kedua
+- [x] Panel scatter nilai vs TMA berfungsi
+- [x] Panel penjelasan muncul untuk instrumen di atas normal
+- [x] Ada satu instrumen pembawa narasi penyimpangan lambat — P-03, siaga
+- [x] Semua waktu berlabel WIB
+- [x] Nol kalimat berklaim life-safety
+- [x] Slot logo klien ada di header
+- [x] Dibuka di 1366×768 tanpa scroll horizontal
+
+Belum lolos, dan sengaja dicatat terbuka:
+
+- [ ] `risiko.html` masih kerangka — catatan decision support sudah terpasang,
+      tetapi ketiga komponennya belum diisi
+- [ ] Pemilih bendungan di header masih `[BENDUNGAN A]`, padahal data sudah
+      menyebut Bendungan Sedayu (`STATUS.md` Bagian 6.1)
+- [ ] Lencana quality `bad` tidak pernah tampil karena datanya tidak ada
