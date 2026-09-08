@@ -107,7 +107,7 @@ Claude Code tidak boleh menebak enam hal ini. Bila belum ada, tanyakan.
 
 | Risiko | Mitigasi |
 |---|---|
-| Klien mengira mockup adalah produk jadi | Label "Mockup — data karangan" permanen di header |
+| Klien mengira mockup adalah produk jadi | Label "Pratinjau produk · data contoh" permanen di header |
 | Dashboard seluruhnya hijau → terlihat menipu | Wajib ada `insufficient_data` dan `stale` di data dummy |
 | Data karangan tidak masuk akal → kredibilitas hilang di depan engineer | Pola data mengikuti `03-skema-data-dummy.md` Bagian 4 |
 | Mockup jadi barang buangan | Stack disamakan dengan proyek induk, markup dapat dipindah ke `frontend/templates/` |

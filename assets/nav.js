@@ -20,15 +20,35 @@
 (function (global) {
   'use strict';
 
-  // --- Placeholder branding --------------------------------------------------
+  // --- Branding ---------------------------------------------------------------
   // docs/01 Bagian 7: nama produk, bendungan, dan logo adalah keputusan user.
-  // Sampai ditetapkan, semuanya placeholder. Ganti di sini saja — satu titik.
+  // Nama produk dan lambangnya sudah ditetapkan; nama bendungan dan identitas
+  // pengguna masih placeholder. Ganti di sini saja — satu titik.
 
   var PRODUK = {
-    nama: '[NAMA PRODUK]',
+    nama: 'SightBased.id',
     tagline: 'Sistem Pemantauan Bendungan',
   };
 
+  // Lambang produk sebagai SVG sebaris: lensa dengan garis muka air di
+  // tengahnya. Tanpa berkas gambar, jadi tetap tajam di proyektor dan tidak
+  // menambah permintaan jaringan saat demo.
+  // Lambang produk sebagai SVG sebaris: muka air di dalam lensa. Versi
+  // pertama memakai titik di atas lengkung, yang terbaca sebagai wajah
+  // tersenyum — salah nada untuk produk keamanan bendungan.
+  // Tanpa berkas gambar, jadi tetap tajam di proyektor dan tidak menambah
+  // permintaan jaringan saat demo.
+  var LAMBANG =
+    '<svg viewBox="0 0 32 32" class="h-8 w-8 shrink-0" aria-hidden="true">' +
+      '<defs><clipPath id="ews-lensa"><circle cx="16" cy="16" r="11.6"/></clipPath></defs>' +
+      '<g clip-path="url(#ews-lensa)">' +
+        '<path d="M-2 17.6c3.4 0 3.4-2.6 6.8-2.6s3.4 2.6 6.8 2.6 3.4-2.6 6.8-2.6 ' +
+          '3.4 2.6 6.8 2.6 3.4-2.6 6.8-2.6V32H-2z" fill="#0369a1" opacity="0.9"/>' +
+      '</g>' +
+      '<circle cx="16" cy="16" r="11.6" fill="none" stroke="#0369a1" stroke-width="2.4"/>' +
+      '<path d="M16 2.2v3.4M16 26.4v3.4M2.2 16h3.4M26.4 16h3.4" ' +
+        'stroke="#0369a1" stroke-width="2" stroke-linecap="round"/>' +
+    '</svg>';
   var BENDUNGAN = [
     { kode: 'A', nama: '[BENDUNGAN A]', aktif: true },
     { kode: 'B', nama: '[BENDUNGAN B]', aktif: false },
@@ -70,7 +90,11 @@
     'keamanan bendungan berada pada pengelola bendungan bersertifikat dan tidak ' +
     'menggantikan prosedur pemantauan manual maupun Rencana Tindak Darurat yang berlaku.';
 
-  var TEKS_PITA = 'MOCKUP — seluruh data adalah karangan';
+  // Kata-katanya ditetapkan user; fungsinya tidak berubah. Pita tetap
+  // permanen dan tetap menyatakan dua hal yang melindungi user bila
+  // tangkapan layar beredar tanpa konteks: ini pratinjau, dan angkanya
+  // bukan data bendungan sungguhan.
+  var TEKS_PITA = 'PRATINJAU PRODUK · data contoh, bukan data bendungan sungguhan';
 
   var esc = global.EWSStatus.escapeHTML;
 
@@ -155,9 +179,10 @@
 
         // Kiri: logo konsultan + nama produk
         '<div class="flex min-w-0 items-center gap-3">' +
-          '<div title="Slot logo konsultan" class="' + slotLogo + ' h-10 w-16 shrink-0">LOGO</div>' +
+          LAMBANG +
           '<div class="min-w-0">' +
-            '<div class="truncate text-base font-semibold text-zinc-900">' + ph(PRODUK.nama) + '</div>' +
+            '<div class="truncate text-base font-semibold tracking-tight text-zinc-900">' +
+              esc(PRODUK.nama) + '</div>' +
             '<div class="truncate text-xs text-zinc-500">' + esc(PRODUK.tagline) + '</div>' +
           '</div>' +
         '</div>' +

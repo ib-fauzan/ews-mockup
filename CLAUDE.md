@@ -33,7 +33,8 @@ diam-diam pilih salah satu.
   otomatis", "sirene", "24/7 terjamin".
 - Setiap halaman berstatus memuat catatan decision support (`docs/01` Bagian 5), di
   tempat yang terbaca.
-- Pita **MOCKUP — seluruh data adalah karangan** permanen di header, tidak bisa ditutup.
+- Pita **PRATINJAU PRODUK · data contoh, bukan data bendungan sungguhan** permanen
+  di header, tidak bisa ditutup.
 
 **Aturan data — pelanggaran atas ini adalah bug serius, bukan preferensi gaya:**
 

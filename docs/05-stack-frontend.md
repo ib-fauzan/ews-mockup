@@ -105,8 +105,8 @@ Mockup adalah situs statis. Cukup unggah isi folder ini ke hosting statis mana p
 yang jelas berbeda, supaya tangkapan layar demo tidak pernah tertukar dengan sistem
 sungguhan.
 
-Pita label **MOCKUP — seluruh data adalah karangan** tetap tampil di versi yang
-dideploy. Tidak ada versi "bersih tanpa label".
+Pita label **PRATINJAU PRODUK · data contoh, bukan data bendungan sungguhan** tetap
+tampil di versi yang dideploy. Tidak ada versi "bersih tanpa label".
 
 ---
 

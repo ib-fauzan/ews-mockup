@@ -21,7 +21,7 @@ Dipakai semua halaman, dibangun lebih dulu sebelum halaman mana pun.
 | Kiri | Logo konsultan + nama produk |
 | Tengah | Pemilih bendungan (dropdown) — pada mockup isinya satu bendungan aktif + dua nonaktif |
 | Kanan | Slot logo klien, lalu nama pengguna demo dan perannya |
-| Pita atas | Label permanen: **MOCKUP — seluruh data adalah karangan** |
+| Pita atas | Label permanen: **PRATINJAU PRODUK · data contoh, bukan data bendungan sungguhan** |
 
 Pita label mockup tidak boleh bisa ditutup. Ini melindungi Anda kalau tangkapan layar
 demo beredar tanpa konteks.
