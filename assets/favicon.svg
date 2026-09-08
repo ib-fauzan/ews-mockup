@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!--
+    Favicon SightBased.id — versi tersendiri, bukan salinan lambang header.
+
+    Lambang header memakai lingkaran bergaris tipis dengan empat tanda
+    reticle. Pada 16x16 garis setipis itu menyatu jadi bubur abu-abu dan
+    tandanya hilang. Versi ini menyederhanakannya jadi dua bidang besar
+    yang tetap terbaca sekecil apa pun: lensa terisi air separuh.
+
+    width/height ditulis eksplisit; tanpa itu peramban yang membuka berkas
+    ini langsung akan menskalakannya ke seluruh viewport.
+  -->
+  <defs>
+    <clipPath id="lensa">
+      <circle cx="16" cy="16" r="13.2"/>
+    </clipPath>
+  </defs>
+  <circle cx="16" cy="16" r="13.2" fill="#ffffff"/>
+  <g clip-path="url(#lensa)">
+    <path d="M-2 14c3.2 0 3.2-2.2 6.4-2.2s3.2 2.2 6.4 2.2 3.2-2.2 6.4-2.2
+             3.2 2.2 6.4 2.2 3.2-2.2 6.4-2.2 3.2 2.2 6.4 2.2V34H-2z" fill="#0369a1"/>
+  </g>
+  <circle cx="16" cy="16" r="13.2" fill="none" stroke="#0369a1" stroke-width="4"/>
+</svg>
