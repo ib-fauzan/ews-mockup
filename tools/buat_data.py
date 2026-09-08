@@ -66,7 +66,9 @@ AMBANG_INKLINO = {"waspada": 12.0, "siaga": 20.0, "awas": 32.0}    # mm
 # --- Identitas karangan ------------------------------------------------------
 NAMA_BENDUNGAN = "Bendungan Sedayu"
 SUNGAI = "Kali Sedayu"
-PENGELOLA = "BBWS Wilayah Tengah"
+# Pemilik swasta karangan. Sengaja bukan balai atau instansi pemerintah:
+# mockup tidak boleh terbaca seolah memakai identitas lembaga sungguhan.
+PENGELOLA = "PT Tirta Nusa Energi"
 # Jangkar koordinat bendungan karangan. Nilai lama berasal dari skrip yang
 # menuliskannya sebagai "digeser dari lokasi asli" — yaitu koordinat situs
 # sungguhan yang digeser sedikit, dan itu tetap menunjuk ke tempat yang sama

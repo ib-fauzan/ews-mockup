@@ -55,17 +55,17 @@
     { kode: 'C', nama: '[BENDUNGAN C]', aktif: false },
   ];
 
-  // Klien karangan. Namanya sengaja dibuat sama dengan `pengelola` di
-  // data/bendungan.json supaya header dan data tidak bercerita berbeda.
-  // "Wilayah Tengah" bukan nama balai yang benar-benar ada.
+  // Klien karangan, perusahaan swasta. Namanya sengaja dibuat sama dengan
+  // `pengelola` di data/bendungan.json supaya header dan data tidak bercerita
+  // berbeda. Sengaja bukan balai atau instansi pemerintah — mockup tidak boleh
+  // terbaca seolah memakai identitas lembaga sungguhan.
   var KLIEN = {
-    nama: 'BBWS Wilayah Tengah',
-    peran: 'Pengelola bendungan',
+    nama: 'PT Tirta Nusa Energi',
+    peran: 'Pemilik & pengelola bendungan',
   };
 
   // Lambang klien sengaja abstrak: tiga guratan air pada ubin membulat.
-  // BUKAN bentuk perisai, segel, atau lambang negara — mockup ini tidak boleh
-  // terlihat memakai emblem instansi pemerintah yang sungguhan.
+  // Bentuk korporat biasa, bukan perisai atau segel.
   var LAMBANG_KLIEN =
     '<svg viewBox="0 0 32 32" class="h-9 w-9 shrink-0" aria-hidden="true">' +
       '<rect x="1.5" y="1.5" width="29" height="29" rx="7" fill="#0f766e"/>' +
