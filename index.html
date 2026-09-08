@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pengawasan Bendungan — Mockup EWS</title>
 
-  <!-- docs/05 Bagian 4: versi dikunci, jangan @latest. -->
+  <!-- docs/05 Bagian 4: versi dikunci, jangan @latest.
+       ECharts dimuat lebih dulu daripada Alpine supaya pulau grafik sudah
+       tersedia saat store selesai memuat data. -->
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="assets/style.css">
-  <!-- ECharts dan MapLibre belum dimuat: kerangka. -->
 </head>
 
 <body data-halaman="index" data-catatan-ds class="flex min-h-screen flex-col bg-white text-zinc-900">
@@ -20,7 +22,10 @@
   <div class="flex min-h-0 flex-1 items-stretch">
     <div id="ews-sidebar" class="shrink-0"></div>
 
-    <main class="min-w-0 flex-1 px-6 py-5">
+    <!-- x-data wajib ada di sini. Alpine v3 hanya menginisialisasi pohon yang
+         berakar pada x-data; tanpa ini seluruh x-if dan x-text di bawahnya
+         diabaikan diam-diam dan halaman berhenti di "Memuat data". -->
+    <main x-data class="min-w-0 flex-1 px-6 py-5">
       <header class="mb-4">
         <h1 class="text-xl font-semibold">Pengawasan Bendungan</h1>
         <p class="text-sm text-zinc-500">Dam Surveillance</p>
@@ -29,62 +34,205 @@
       <!-- Catatan decision support, docs/01 Bagian 5. Disuntik oleh nav.js. -->
       <div id="ews-catatan-ds"></div>
 
+      <template x-if="!$store.ews.siap && !$store.ews.galat">
+        <p class="text-sm text-zinc-500">Memuat data&hellip;</p>
+      </template>
+      <template x-if="$store.ews.galat">
+        <p class="border-l-4 border-zinc-500 bg-zinc-100 px-4 py-3 text-sm">
+          Gagal memuat data: <span x-text="$store.ews.galat"></span>.
+          Halaman ini perlu dibuka lewat server statis, bukan berkas lokal.
+        </p>
+      </template>
+
+      <!-- x-if, bukan x-show: x-show menyisakan elemen di DOM dan tetap
+           mengevaluasi bindingnya, sehingga bendungan.tma_sekarang_mdpl
+           dibaca saat store masih null dan halaman gagal sebelum data tiba. -->
+      <template x-if="$store.ews.siap">
       <div class="grid grid-cols-3 gap-4">
 
-        <section class="ews-blok-kosong col-span-2 p-4">
-          <h2 class="text-sm font-semibold">Kartu ringkasan status aset</h2>
-          <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-            Cacahan instrumen per status, disertai nama instrumennya. Tidak pernah warna
-            telanjang. Daftar panjang dipangkas jadi tiga pertama lalu &ldquo;+n lainnya&rdquo;,
-            cacahan tidak pernah disembunyikan.
+        <!-- 2.1 Kartu ringkasan status aset -->
+        <section class="col-span-2 rounded border border-zinc-200 p-4">
+          <div class="mb-3 flex items-baseline justify-between">
+            <h2 class="text-sm font-semibold">Status aset</h2>
+            <span class="text-xs text-zinc-500">
+              <span x-text="$store.ews.instrumen.length"></span> instrumen terpasang
+            </span>
+          </div>
+
+          <ul class="space-y-1.5">
+            <template x-for="baris in $store.ews.ringkasan" :key="baris.kode">
+              <li class="flex items-center gap-3 text-sm">
+                <span class="w-40 shrink-0" x-html="EWSStatus.lencanaStatus(baris.kode)"></span>
+                <span class="w-28 shrink-0 tabular-nums">
+                  <b x-text="baris.jumlah"></b> instrumen
+                </span>
+                <span class="min-w-0 truncate text-zinc-500">
+                  <span x-text="baris.nama"></span><span x-show="baris.sisa > 0" x-text="', +' + baris.sisa + ' lainnya'"></span>
+                </span>
+              </li>
+            </template>
+          </ul>
+
+          <p x-show="$store.ews.jumlahBasi > 0"
+             class="mt-3 border-t border-zinc-200 pt-2 text-xs text-zinc-600">
+            <span x-text="$store.ews.jumlahBasi"></span> instrumen membawa penanda basi —
+            bacaannya lewat jadwal, terlepas dari tingkat peringatannya.
           </p>
-          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
         </section>
 
+        <!-- 2.2 Panel TMA -->
+        <section class="rounded border border-zinc-200 p-4">
+          <h2 class="mb-3 text-sm font-semibold">Tinggi muka air waduk</h2>
+
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-semibold tabular-nums"
+                  x-text="$store.ews.bendungan.tma_sekarang_mdpl.toFixed(2)"></span>
+            <span class="text-sm text-zinc-500">mdpl</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            Dibaca <span x-text="EWSStatus.formatWIB($store.ews.bendungan.tma_diperbarui)"></span>
+          </p>
+
+          <dl class="mt-3 space-y-1 text-xs">
+            <div class="flex justify-between">
+              <dt class="text-zinc-500">Elevasi puncak</dt>
+              <dd class="tabular-nums"><span x-text="$store.ews.bendungan.elevasi_puncak_mdpl.toFixed(2)"></span> mdpl</dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="text-zinc-500">Tinggi jagaan</dt>
+              <dd class="tabular-nums"><span x-text="$store.ews.tinggiJagaan.toFixed(2)"></span> m</dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="text-zinc-500">Rentang historis</dt>
+              <dd class="tabular-nums">
+                <span x-text="$store.ews.bendungan.tma_historis_min.toFixed(2)"></span>&ndash;<span x-text="$store.ews.bendungan.tma_historis_max.toFixed(2)"></span> mdpl
+              </dd>
+            </div>
+          </dl>
+
+          <!-- docs/02 Bagian 2.2: peringatan eksplisit bila di luar rentang historis -->
+          <p x-show="$store.ews.tmaDiLuarRentang" x-cloak
+             class="mt-3 border-l-4 border-zinc-500 bg-zinc-100 px-3 py-2 text-xs leading-relaxed">
+            TMA di luar rentang data historis. Penilaian envelope tidak berlaku.
+            Kembali ke penilaian ambang absolut dan pengamatan langsung.
+          </p>
+
+          <!-- $nextTick supaya ECharts menginisialisasi setelah elemen punya
+               lebar; init pada elemen berlebar nol menghasilkan grafik kosong. -->
+          <div x-data="{ g: null }"
+               x-init="$nextTick(() => { g = EWSCharts.sparklineTMA($refs.spark, $store.ews.deretTMA); EWSCharts.ikutiUkuran([g], $refs.spark); })">
+            <div x-ref="spark" class="mt-3 h-28"></div>
+          </div>
+          <p class="text-center text-[10px] text-zinc-400">
+            <span x-text="$store.ews.deretTMA.length"></span> hari terakhir &middot; waktu WIB
+          </p>
+        </section>
+
+        <!-- 2.5 Instrumen perlu perhatian -->
+        <section class="col-span-2 rounded border border-zinc-200 p-4">
+          <h2 class="mb-1 text-sm font-semibold">Instrumen perlu perhatian</h2>
+          <p class="mb-3 text-xs text-zinc-500">
+            Di atas normal, tidak dapat dinilai, atau basi. Indikator utama PFM diurutkan lebih atas.
+          </p>
+
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
+                <th class="py-1.5 pr-4 font-medium">Instrumen</th>
+                <th class="py-1.5 pr-4 font-medium">Jenis</th>
+                <th class="py-1.5 pr-4 font-medium">Status</th>
+                <th class="py-1.5 pr-4 font-medium">Alasan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="b in $store.ews.perluPerhatian" :key="b.instrumen.id">
+                <tr class="border-b border-zinc-100 align-top">
+                  <td class="whitespace-nowrap py-1.5 pr-4">
+                    <a :href="'instrumentasi.html#' + b.instrumen.id"
+                       class="font-medium underline decoration-zinc-300 hover:decoration-zinc-600"
+                       x-text="b.instrumen.id"></a>
+                    <span x-show="b.utama"
+                          class="ml-1 rounded border border-zinc-400 px-1 text-[10px] uppercase tracking-wide text-zinc-600"
+                          title="Indikator utama PFM">PFM</span>
+                  </td>
+                  <td class="whitespace-nowrap py-1.5 pr-4 text-zinc-500" x-text="b.instrumen.jenis.replace(/_/g, ' ')"></td>
+                  <td class="py-1.5">
+                    <span x-html="EWSStatus.lencanaStatus(b.ember)"></span>
+                    <span x-show="b.kebasian > 0 && EWSStatus.dapatDinilai(b.ember)"
+                          x-html="EWSStatus.lencanaStatus(b.kebasian === 2 ? 'stale_kritis' : 'stale')"></span>
+                  </td>
+                  <td class="py-1.5 text-xs leading-relaxed text-zinc-600" x-text="b.alasan"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- 2.3 Peta instrumen -->
         <section class="ews-blok-kosong p-4">
-          <h2 class="text-sm font-semibold">Panel TMA</h2>
-          <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-            TMA sekarang (mdpl), elevasi puncak, tinggi jagaan, waktu pembacaan terakhir
-            berlabel WIB, sparkline tiga puluh hari. Peringatan eksplisit bila TMA di luar
-            rentang historis.
-          </p>
-          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data &middot; ECharts</p>
-        </section>
-
-        <section class="ews-blok-kosong col-span-2 p-4">
           <h2 class="text-sm font-semibold">Peta instrumen</h2>
           <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-            Penanda berwarna sesuai status kanal tertinggi tiap instrumen. Klik penanda
-            membuka popup ringkas dengan tautan ke halaman instrumentasi.
+            Penanda berwarna sesuai status kanal tertinggi tiap instrumen, dengan popup
+            ringkas yang tertaut ke halaman instrumentasi.
           </p>
-          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data &middot; MapLibre</p>
+          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Belum dipasang &middot; MapLibre</p>
         </section>
 
-        <section class="ews-blok-kosong p-4">
-          <h2 class="text-sm font-semibold">Instrumen perlu perhatian</h2>
-          <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-            Instrumen di atas normal, berdata tidak cukup, atau basi. Indikator utama PFM
-            ditampilkan lebih menonjol dan diurutkan lebih atas.
-          </p>
-          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
-        </section>
-
-        <section class="ews-blok-kosong col-span-3 p-4">
-          <h2 class="text-sm font-semibold">Daftar kejadian terakhir</h2>
-          <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-            Transisi tingkat peringatan tiga puluh hari terakhir. Kolom: waktu (WIB),
-            instrumen, transisi, aturan yang terpicu, status tindak lanjut. Kejadian yang
-            berasal dari bacaan belum diverifikasi ditandai provisional.
-          </p>
-          <p class="mt-3 text-xs uppercase tracking-wide text-zinc-400">Menunggu data</p>
+        <!-- 2.4 Daftar kejadian terakhir -->
+        <section class="col-span-3 rounded border border-zinc-200 p-4">
+          <h2 class="mb-3 text-sm font-semibold">Kejadian terakhir</h2>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
+                <th class="py-1.5 pr-4 font-medium">Waktu</th>
+                <th class="py-1.5 pr-4 font-medium">Instrumen</th>
+                <th class="py-1.5 pr-4 font-medium">Transisi</th>
+                <th class="py-1.5 pr-4 font-medium">Aturan</th>
+                <th class="py-1.5 pr-4 font-medium">Simpangan</th>
+                <th class="py-1.5 pr-4 font-medium">Tindak lanjut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="e in $store.ews.kejadianTerbaru" :key="e.waktu + e.id_kanal">
+                <tr class="border-b border-zinc-100 align-top">
+                  <td class="whitespace-nowrap py-1.5 pr-4 text-xs text-zinc-600"
+                      x-text="EWSStatus.formatWIB(e.waktu)"></td>
+                  <td class="py-1.5">
+                    <a :href="'instrumentasi.html#' + e.id_instrumen"
+                       class="underline decoration-zinc-300 hover:decoration-zinc-600"
+                       x-text="e.id_instrumen"></a>
+                  </td>
+                  <td class="whitespace-nowrap py-1.5 pr-4">
+                    <span x-html="EWSStatus.lencanaStatus(e.dari)"></span>
+                    <span class="mx-1 text-zinc-400" aria-hidden="true">&rarr;</span>
+                    <span x-html="EWSStatus.lencanaStatus(e.ke)"></span>
+                  </td>
+                  <td class="py-1.5 pr-4 text-xs text-zinc-600" x-text="e.aturan"></td>
+                  <td class="py-1.5 pr-4 text-xs tabular-nums text-zinc-600">
+                    <span x-text="e.simpangan_z.toFixed(1)"></span>&sigma;
+                  </td>
+                  <td class="py-1.5 text-xs leading-relaxed text-zinc-600">
+                    <span x-show="e.provisional"
+                          class="mr-1 rounded border border-zinc-400 px-1 text-[10px] uppercase tracking-wide"
+                          title="Dipicu bacaan yang belum diverifikasi">provisional</span>
+                    <span x-text="e.tindak_lanjut"></span>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
         </section>
 
       </div>
+      </template>
     </main>
   </div>
 
-  <!-- Tanpa defer, dan sebelum Alpine berjalan: nav.js menyuntik markup ber-x-data. -->
+  <!-- Tanpa defer, dan sebelum Alpine berjalan: nav.js menyuntik markup ber-x-data,
+       data.js mendaftarkan store pada alpine:init. -->
   <script src="assets/status.js"></script>
+  <script src="assets/data.js"></script>
+  <script src="assets/charts.js"></script>
   <script src="assets/nav.js"></script>
 </body>
 </html>

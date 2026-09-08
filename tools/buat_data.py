@@ -244,11 +244,18 @@ def bangun_skalar(par, rng, tanggal, tma):
         ambang = None
         z = med_kini = sigma_kini = None
         if target == "insufficient_data":
+            # Dua sebab berbeda, dan alasannya harus cocok dengan angkanya.
+            # Versi sebelumnya memakai cabang terbalik sehingga menuliskan
+            # "TMA di atas cakupan" untuk TMA yang justru di dalam cakupan.
             status = "insufficient_data"
-            cakupan = riw_t.max() if len(riw_t) else tma_kini
-            alasan = (f"TMA {tma_kini:.2f} mdpl di atas cakupan riwayat instrumen ini "
-                      f"({cakupan:.2f} mdpl). Penilaian envelope tidak berlaku.")
-            if env:
+            atas = float(riw_t.max()) if len(riw_t) else tma_kini
+            bawah = float(riw_t.min()) if len(riw_t) else tma_kini
+            if tma_kini > atas or tma_kini < bawah:
+                arah = "di atas" if tma_kini > atas else "di bawah"
+                batas = atas if tma_kini > atas else bawah
+                alasan = (f"TMA {tma_kini:.2f} mdpl {arah} cakupan riwayat instrumen ini "
+                          f"({batas:.2f} mdpl). Penilaian envelope tidak berlaku.")
+            else:
                 alasan = (f"Hanya {cacah_bin} sampel historis pada rentang TMA ini, "
                           f"minimum {MIN_SAMPEL_BIN}.")
         elif jenis in ("tma", "arr") or env is None:
